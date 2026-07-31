@@ -1,0 +1,13 @@
+node_modules
+dist
+.output
+.nuxt
+.data
+coverage
+.env
+.superpowers
+*.log
+frontend/node_modules
+frontend/.output
+frontend/.nuxt
+data/
