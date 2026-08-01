@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package common.v1;
+
+message Empty {}
+
+message IdRequest {
+  string id = 1;
+  string organization_id = 2;
+}
+
+message OrganizationRequest {
+  string organization_id = 1;
+}
+
+message Pagination {
+  int32 page = 1;
+  int32 page_size = 2;
+}
+
+message PageMeta {
+  int32 page = 1;
+  int32 page_size = 2;
+  int32 total = 3;
+}
+
+message DeleteResponse {
+  bool deleted = 1;
+}
+
+message GeoPoint {
+  double latitude = 1;
+  double longitude = 2;
+}

@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package geofence.v1;
+
+import "common.proto";
+
+message Geofence {
+  string id = 1;
+  string organization_id = 2;
+  string name = 3;
+  string description = 4;
+  string polygon_geojson = 5;
+  int32 speed_limit_kmh = 6;
+  string allowed_from = 7;
+  string allowed_to = 8;
+  bool alert_on_enter = 9;
+  bool alert_on_exit = 10;
+  string color = 11;
+  bool is_active = 12;
+  string created_at = 13;
+  string updated_at = 14;
+}
+
+message GeofenceInput {
+  string organization_id = 1;
+  string name = 2;
+  string description = 3;
+  string polygon_geojson = 4;
+  int32 speed_limit_kmh = 5;
+  string allowed_from = 6;
+  string allowed_to = 7;
+  bool alert_on_enter = 8;
+  bool alert_on_exit = 9;
+  string color = 10;
+  bool is_active = 11;
+}
+
+message UpdateGeofenceRequest {
+  string id = 1;
+  GeofenceInput input = 2;
+}
+
+message ListGeofencesRequest {
+  string organization_id = 1;
+  bool only_active = 2;
+}
+
+message ListGeofencesResponse {
+  repeated Geofence items = 1;
+}
+
+message VehicleStateRequest {
+  string organization_id = 1;
+  string vehicle_id = 2;
+}
+
+message VehicleStateResponse {
+  repeated string inside_geofence_ids = 1;
+  string last_evaluated_at = 2;
+}
+
+service GeofenceService {
+  rpc Create (GeofenceInput) returns (Geofence);
+  rpc Update (UpdateGeofenceRequest) returns (Geofence);
+  rpc Get (common.v1.IdRequest) returns (Geofence);
+  rpc List (ListGeofencesRequest) returns (ListGeofencesResponse);
+  rpc Delete (common.v1.IdRequest) returns (common.v1.DeleteResponse);
+  rpc VehicleState (VehicleStateRequest) returns (VehicleStateResponse);
+}
