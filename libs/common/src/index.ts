@@ -3,3 +3,6 @@ export * from './kafka/topics';
 export * from './contracts/telemetry';
 export * from './utils/geo';
 export * from './utils/time';
+export * from './grpc/packages';
+export * from './grpc/grpc-options';
+export * from './grpc/grpc-errors';

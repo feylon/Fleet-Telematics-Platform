@@ -1,0 +1,312 @@
+syntax = "proto3";
+
+package fleet.v1;
+
+import "common.proto";
+
+message Vehicle {
+  string id = 1;
+  string organization_id = 2;
+  string plate_number = 3;
+  string vin = 4;
+  string brand = 5;
+  string model = 6;
+  int32 year = 7;
+  string fuel_type = 8;
+  float fuel_tank_capacity = 9;
+  float odometer_km = 10;
+  int32 max_speed_kmh = 11;
+  string status = 12;
+  int32 maintenance_interval_km = 13;
+  string next_inspection_at = 14;
+  float next_inspection_odometer_km = 15;
+  string color = 16;
+  string icon_type = 17;
+  string created_at = 18;
+  string updated_at = 19;
+  string imei = 20;
+  string driver_id = 21;
+  string driver_name = 22;
+}
+
+message VehicleInput {
+  string organization_id = 1;
+  string plate_number = 2;
+  string vin = 3;
+  string brand = 4;
+  string model = 5;
+  int32 year = 6;
+  string fuel_type = 7;
+  float fuel_tank_capacity = 8;
+  float odometer_km = 9;
+  int32 max_speed_kmh = 10;
+  string status = 11;
+  int32 maintenance_interval_km = 12;
+  string next_inspection_at = 13;
+  float next_inspection_odometer_km = 14;
+  string color = 15;
+  string icon_type = 16;
+}
+
+message UpdateVehicleRequest {
+  string id = 1;
+  VehicleInput input = 2;
+}
+
+message ListVehiclesRequest {
+  string organization_id = 1;
+  string search = 2;
+  string status = 3;
+  common.v1.Pagination pagination = 4;
+}
+
+message ListVehiclesResponse {
+  repeated Vehicle items = 1;
+  common.v1.PageMeta meta = 2;
+}
+
+message VehicleIdsRequest {
+  string organization_id = 1;
+  repeated string ids = 2;
+}
+
+message VehiclesResponse {
+  repeated Vehicle items = 1;
+}
+
+message SetVehicleStatusRequest {
+  string id = 1;
+  string organization_id = 2;
+  string status = 3;
+}
+
+service VehicleService {
+  rpc Create (VehicleInput) returns (Vehicle);
+  rpc Update (UpdateVehicleRequest) returns (Vehicle);
+  rpc Get (common.v1.IdRequest) returns (Vehicle);
+  rpc List (ListVehiclesRequest) returns (ListVehiclesResponse);
+  rpc GetMany (VehicleIdsRequest) returns (VehiclesResponse);
+  rpc Delete (common.v1.IdRequest) returns (common.v1.DeleteResponse);
+  rpc SetStatus (SetVehicleStatusRequest) returns (Vehicle);
+}
+
+message Device {
+  string id = 1;
+  string organization_id = 2;
+  string imei = 3;
+  string vehicle_id = 4;
+  string model = 5;
+  string sim_number = 6;
+  bool is_active = 7;
+  string last_seen_at = 8;
+  string created_at = 9;
+  string plate_number = 10;
+}
+
+message DeviceInput {
+  string organization_id = 1;
+  string imei = 2;
+  string vehicle_id = 3;
+  string model = 4;
+  string sim_number = 5;
+  bool is_active = 6;
+}
+
+message DeviceWithToken {
+  Device device = 1;
+  string token = 2;
+}
+
+message UpdateDeviceRequest {
+  string id = 1;
+  DeviceInput input = 2;
+}
+
+message ListDevicesRequest {
+  string organization_id = 1;
+  string search = 2;
+  common.v1.Pagination pagination = 3;
+}
+
+message ListDevicesResponse {
+  repeated Device items = 1;
+  common.v1.PageMeta meta = 2;
+}
+
+message ResolveDeviceRequest {
+  string imei = 1;
+  string token = 2;
+}
+
+message DeviceBinding {
+  bool valid = 1;
+  string organization_id = 2;
+  string vehicle_id = 3;
+  string device_id = 4;
+  int32 max_speed_kmh = 5;
+  string plate_number = 6;
+}
+
+message TouchDeviceRequest {
+  string imei = 1;
+  string seen_at = 2;
+}
+
+service DeviceService {
+  rpc Create (DeviceInput) returns (DeviceWithToken);
+  rpc Update (UpdateDeviceRequest) returns (Device);
+  rpc Get (common.v1.IdRequest) returns (Device);
+  rpc List (ListDevicesRequest) returns (ListDevicesResponse);
+  rpc Delete (common.v1.IdRequest) returns (common.v1.DeleteResponse);
+  rpc RotateToken (common.v1.IdRequest) returns (DeviceWithToken);
+  rpc Resolve (ResolveDeviceRequest) returns (DeviceBinding);
+  rpc Touch (TouchDeviceRequest) returns (common.v1.Empty);
+}
+
+message Driver {
+  string id = 1;
+  string organization_id = 2;
+  string user_id = 3;
+  string full_name = 4;
+  string phone = 5;
+  string license_number = 6;
+  repeated string license_categories = 7;
+  string license_expires_at = 8;
+  string birth_date = 9;
+  string vehicle_id = 10;
+  string shift_start = 11;
+  string shift_end = 12;
+  bool is_active = 13;
+  string hired_at = 14;
+  string created_at = 15;
+  string plate_number = 16;
+  string login = 17;
+}
+
+message DriverInput {
+  string organization_id = 1;
+  string user_id = 2;
+  string full_name = 3;
+  string phone = 4;
+  string license_number = 5;
+  repeated string license_categories = 6;
+  string license_expires_at = 7;
+  string birth_date = 8;
+  string vehicle_id = 9;
+  string shift_start = 10;
+  string shift_end = 11;
+  bool is_active = 12;
+  string hired_at = 13;
+}
+
+message UpdateDriverRequest {
+  string id = 1;
+  DriverInput input = 2;
+}
+
+message ListDriversRequest {
+  string organization_id = 1;
+  string search = 2;
+  common.v1.Pagination pagination = 3;
+}
+
+message ListDriversResponse {
+  repeated Driver items = 1;
+  common.v1.PageMeta meta = 2;
+}
+
+message UserIdRequest {
+  string user_id = 1;
+}
+
+message AssignVehicleRequest {
+  string id = 1;
+  string organization_id = 2;
+  string vehicle_id = 3;
+}
+
+service DriverService {
+  rpc Create (DriverInput) returns (Driver);
+  rpc Update (UpdateDriverRequest) returns (Driver);
+  rpc Get (common.v1.IdRequest) returns (Driver);
+  rpc GetByUser (UserIdRequest) returns (Driver);
+  rpc List (ListDriversRequest) returns (ListDriversResponse);
+  rpc Delete (common.v1.IdRequest) returns (common.v1.DeleteResponse);
+  rpc AssignVehicle (AssignVehicleRequest) returns (Driver);
+}
+
+message MaintenanceLog {
+  string id = 1;
+  string organization_id = 2;
+  string vehicle_id = 3;
+  string type = 4;
+  string description = 5;
+  string cost_amount = 6;
+  float odometer_km = 7;
+  string performed_at = 8;
+  string next_due_at = 9;
+  float next_due_odometer_km = 10;
+  string downtime_from = 11;
+  string downtime_to = 12;
+  string performed_by_id = 13;
+  string created_at = 14;
+  string plate_number = 15;
+}
+
+message MaintenanceInput {
+  string organization_id = 1;
+  string vehicle_id = 2;
+  string type = 3;
+  string description = 4;
+  string cost_amount = 5;
+  float odometer_km = 6;
+  string performed_at = 7;
+  string next_due_at = 8;
+  float next_due_odometer_km = 9;
+  string downtime_from = 10;
+  string downtime_to = 11;
+  string performed_by_id = 12;
+  bool mark_out_of_service = 13;
+}
+
+message ListMaintenanceRequest {
+  string organization_id = 1;
+  string vehicle_id = 2;
+  common.v1.Pagination pagination = 3;
+}
+
+message ListMaintenanceResponse {
+  repeated MaintenanceLog items = 1;
+  common.v1.PageMeta meta = 2;
+}
+
+message MaintenanceDueItem {
+  string vehicle_id = 1;
+  string plate_number = 2;
+  string reason = 3;
+  string due_at = 4;
+  float due_odometer_km = 5;
+  float odometer_km = 6;
+}
+
+message MaintenanceDueResponse {
+  repeated MaintenanceDueItem items = 1;
+}
+
+message FuelNorm {
+  string vehicle_id = 1;
+  string organization_id = 2;
+  float liters_per_100km = 3;
+  float winter_coefficient = 4;
+  float city_coefficient = 5;
+  float fuel_drop_alert_fraction = 6;
+}
+
+service MaintenanceService {
+  rpc Create (MaintenanceInput) returns (MaintenanceLog);
+  rpc List (ListMaintenanceRequest) returns (ListMaintenanceResponse);
+  rpc Delete (common.v1.IdRequest) returns (common.v1.DeleteResponse);
+  rpc Due (common.v1.OrganizationRequest) returns (MaintenanceDueResponse);
+  rpc UpsertFuelNorm (FuelNorm) returns (FuelNorm);
+  rpc GetFuelNorm (common.v1.IdRequest) returns (FuelNorm);
+}
