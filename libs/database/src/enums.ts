@@ -1,0 +1,61 @@
+export enum Role {
+  SUPERADMIN = 'SUPERADMIN',
+  DISPATCHER = 'DISPATCHER',
+  FLEET_MANAGER = 'FLEET_MANAGER',
+  DRIVER = 'DRIVER',
+}
+
+export enum VehicleStatus {
+  ACTIVE = 'ACTIVE',
+  MAINTENANCE = 'MAINTENANCE',
+  OUT_OF_SERVICE = 'OUT_OF_SERVICE',
+}
+
+export enum FuelType {
+  PETROL = 'PETROL',
+  DIESEL = 'DIESEL',
+  GAS = 'GAS',
+  ELECTRIC = 'ELECTRIC',
+  HYBRID = 'HYBRID',
+}
+
+export enum OrderStatus {
+  CREATED = 'CREATED',
+  ASSIGNED = 'ASSIGNED',
+  IN_PROGRESS = 'IN_PROGRESS',
+  COMPLETED = 'COMPLETED',
+  CANCELLED = 'CANCELLED',
+}
+
+export enum OrderPriority {
+  LOW = 'LOW',
+  NORMAL = 'NORMAL',
+  HIGH = 'HIGH',
+  URGENT = 'URGENT',
+}
+
+export enum MaintenanceType {
+  INSPECTION = 'INSPECTION',
+  REPAIR = 'REPAIR',
+  OIL_CHANGE = 'OIL_CHANGE',
+  TIRES = 'TIRES',
+  OTHER = 'OTHER',
+}
+
+export enum AlertType {
+  SPEEDING = 'SPEEDING',
+  GEOFENCE_EXIT = 'GEOFENCE_EXIT',
+  GEOFENCE_ENTER = 'GEOFENCE_ENTER',
+  HARSH_BRAKE = 'HARSH_BRAKE',
+  FUEL_DROP = 'FUEL_DROP',
+  UNAUTHORIZED_STOP = 'UNAUTHORIZED_STOP',
+  ROUTE_DEVIATION = 'ROUTE_DEVIATION',
+  SOS = 'SOS',
+  TIME_WINDOW_VIOLATION = 'TIME_WINDOW_VIOLATION',
+}
+
+export enum Severity {
+  INFO = 'INFO',
+  WARNING = 'WARNING',
+  CRITICAL = 'CRITICAL',
+}
