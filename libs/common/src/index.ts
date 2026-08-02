@@ -6,3 +6,4 @@ export * from './utils/time';
 export * from './grpc/packages';
 export * from './grpc/grpc-options';
 export * from './grpc/grpc-errors';
+export * from './security/password';
