@@ -6,7 +6,7 @@ const config: Config = {
   roots: ['<rootDir>/apps', '<rootDir>/libs'],
   testRegex: '.*\\.spec\\.ts$',
   transform: {
-    '^.+\\.ts$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.json', isolatedModules: true }],
+    '^.+\\.ts$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.json' }],
   },
   moduleNameMapper: {
     '^@fleet/common(|/.*)$': '<rootDir>/libs/common/src/$1',
