@@ -12,6 +12,9 @@ import { BrandingModule } from './branding/branding.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { UsersModule } from './users/users.module';
 import { HealthModule } from './health/health.module';
+import { TelemetryModule } from './telemetry/telemetry.module';
+import { DeviceModule } from './telemetry/device.module';
+import { ObservabilityModule } from './observability/observability.module';
 
 const env = loadEnv('gateway');
 
@@ -27,6 +30,9 @@ const env = loadEnv('gateway');
     OrganizationsModule,
     UsersModule,
     HealthModule,
+    TelemetryModule,
+    DeviceModule,
+    ObservabilityModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
