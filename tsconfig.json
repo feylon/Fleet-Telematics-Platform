@@ -18,6 +18,7 @@
     "noImplicitAny": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
+    "isolatedModules": true,
     "paths": {
       "@fleet/common": ["libs/common/src"],
       "@fleet/common/*": ["libs/common/src/*"],
