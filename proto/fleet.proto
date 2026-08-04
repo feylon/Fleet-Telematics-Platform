@@ -109,7 +109,7 @@ message DeviceInput {
   string vehicle_id = 3;
   string model = 4;
   string sim_number = 5;
-  bool is_active = 6;
+  optional bool is_active = 6;
 }
 
 message DeviceWithToken {
@@ -195,7 +195,7 @@ message DriverInput {
   string vehicle_id = 9;
   string shift_start = 10;
   string shift_end = 11;
-  bool is_active = 12;
+  optional bool is_active = 12;
   string hired_at = 13;
 }
 

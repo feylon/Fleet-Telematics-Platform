@@ -15,6 +15,8 @@ import { HealthModule } from './health/health.module';
 import { TelemetryModule } from './telemetry/telemetry.module';
 import { DeviceModule } from './telemetry/device.module';
 import { ObservabilityModule } from './observability/observability.module';
+import { GrpcClientsModule } from './grpc/grpc-clients.module';
+import { FleetModule } from './fleet/fleet.module';
 
 const env = loadEnv('gateway');
 
@@ -33,6 +35,8 @@ const env = loadEnv('gateway');
     TelemetryModule,
     DeviceModule,
     ObservabilityModule,
+    GrpcClientsModule,
+    FleetModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })

@@ -29,10 +29,10 @@ message GeofenceInput {
   int32 speed_limit_kmh = 5;
   string allowed_from = 6;
   string allowed_to = 7;
-  bool alert_on_enter = 8;
-  bool alert_on_exit = 9;
+  optional bool alert_on_enter = 8;
+  optional bool alert_on_exit = 9;
   string color = 10;
-  bool is_active = 11;
+  optional bool is_active = 11;
 }
 
 message UpdateGeofenceRequest {
