@@ -169,7 +169,15 @@ service OrderService {
   rpc Nearby (NearbyRequest) returns (NearbyResponse);
 }
 
+message ReachCheckpointRequest {
+  string order_id = 1;
+  string organization_id = 2;
+  string checkpoint_id = 3;
+  string actor_driver_id = 4;
+}
+
 service RouteService {
   rpc SetRoute (SetRouteRequest) returns (Route);
   rpc ActiveRouteForVehicle (ActiveRouteRequest) returns (ActiveRouteResponse);
+  rpc ReachCheckpoint (ReachCheckpointRequest) returns (Route);
 }
