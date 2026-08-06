@@ -17,6 +17,7 @@ import { DeviceModule } from './telemetry/device.module';
 import { ObservabilityModule } from './observability/observability.module';
 import { GrpcClientsModule } from './grpc/grpc-clients.module';
 import { FleetModule } from './fleet/fleet.module';
+import { GeofencesModule } from './geofences/geofences.module';
 
 const env = loadEnv('gateway');
 
@@ -37,6 +38,7 @@ const env = loadEnv('gateway');
     ObservabilityModule,
     GrpcClientsModule,
     FleetModule,
+    GeofencesModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
