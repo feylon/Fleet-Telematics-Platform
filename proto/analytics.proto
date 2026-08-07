@@ -198,6 +198,7 @@ service AnalyticsService {
   rpc Track (TrackRequest) returns (VehicleSeriesResponse);
   rpc DriverScores (DriverScoreRequest) returns (DriverScoresResponse);
   rpc DailyRollups (TimeRange) returns (DailyRollupResponse);
+  rpc RunRollup (TimeRange) returns (DailyRollupResponse);
   rpc Alerts (AlertsQuery) returns (AlertsResponse);
   rpc AlertStats (TimeRange) returns (AlertStatsResponse);
   rpc Heatmap (HeatmapRequest) returns (HeatmapResponse);
