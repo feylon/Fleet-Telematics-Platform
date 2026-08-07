@@ -18,6 +18,7 @@ import { ObservabilityModule } from './observability/observability.module';
 import { GrpcClientsModule } from './grpc/grpc-clients.module';
 import { FleetModule } from './fleet/fleet.module';
 import { GeofencesModule } from './geofences/geofences.module';
+import { DispatchModule } from './dispatch/dispatch.module';
 
 const env = loadEnv('gateway');
 
@@ -39,6 +40,7 @@ const env = loadEnv('gateway');
     GrpcClientsModule,
     FleetModule,
     GeofencesModule,
+    DispatchModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
