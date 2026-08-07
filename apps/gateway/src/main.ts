@@ -9,6 +9,7 @@ import { setupSwagger } from './swagger';
 import { DeviceModule } from './telemetry/device.module';
 import { FleetModule } from './fleet/fleet.module';
 import { DispatchModule } from './dispatch/dispatch.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 
 const bootstrap = async () => {
   const env = loadEnv('gateway');
@@ -18,7 +19,7 @@ const bootstrap = async () => {
   app.enableCors({ origin: env.corsOrigins, credentials: true });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true, forbidUnknownValues: false }));
   app.enableShutdownHooks();
-  setupSwagger(app, { mobileModules: [FleetModule, DispatchModule], deviceModules: [DeviceModule] });
+  setupSwagger(app, { mobileModules: [FleetModule, DispatchModule, AnalyticsModule], deviceModules: [DeviceModule] });
   await app.listen(env.httpPort, '0.0.0.0');
   Logger.log(`gateway listening on ${env.httpPort}`, 'Bootstrap');
 };
