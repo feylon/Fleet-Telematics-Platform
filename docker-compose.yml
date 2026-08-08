@@ -1,0 +1,321 @@
+name: fleet-telematics
+
+x-backend-env: &backend-env
+  NODE_ENV: production
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: "5432"
+  POSTGRES_USER: ${POSTGRES_USER:-fleet}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fleet_secret_2026}
+  POSTGRES_DB: ${POSTGRES_DB:-fleet}
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+  KAFKA_BROKERS: kafka:9092
+  CLICKHOUSE_URL: http://clickhouse:8123
+  CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
+  CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-clickhouse_secret_2026}
+  CLICKHOUSE_DB: ${CLICKHOUSE_DB:-fleet}
+  JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-c0f9b1e2d4a64c7f8e9a1b2c3d4e5f60718293a4b5c6d7e8f9a0b1c2d3e4f5a6}
+  JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0d9c8b7a6f}
+  JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-900}
+  JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-604800}
+  FLEET_CORE_GRPC_URL: fleet-core:50051
+  GEOFENCE_GRPC_URL: geofence-service:50052
+  DISPATCH_GRPC_URL: dispatch-order:50053
+  ANALYTICS_GRPC_URL: analytics:50054
+  CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+  TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+  TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+  REPORTS_DIR: /data/reports
+  INGEST_BATCH_SIZE: ${INGEST_BATCH_SIZE:-1000}
+  INGEST_BATCH_MS: ${INGEST_BATCH_MS:-1000}
+  TZ: ${TZ:-Asia/Tashkent}
+  TZ_OFFSET_MINUTES: ${TZ_OFFSET_MINUTES:-300}
+
+x-backend-service: &backend-service
+  image: fleet-telematics/backend:latest
+  restart: unless-stopped
+  networks: [fleet]
+  depends_on:
+    migrator:
+      condition: service_completed_successfully
+    kafka-init:
+      condition: service_completed_successfully
+    redis:
+      condition: service_healthy
+    clickhouse:
+      condition: service_healthy
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: fleet-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-fleet}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fleet_secret_2026}
+      POSTGRES_DB: ${POSTGRES_DB:-fleet}
+    command: ["postgres", "-c", "max_connections=200", "-c", "shared_buffers=256MB"]
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PUBLISHED_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-fleet} -d ${POSTGRES_DB:-fleet}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [fleet]
+
+  redis:
+    image: redis:7-alpine
+    container_name: fleet-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "512mb", "--maxmemory-policy", "allkeys-lru"]
+    volumes:
+      - redis-data:/data
+    ports:
+      - "${REDIS_PUBLISHED_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [fleet]
+
+  kafka:
+    image: apache/kafka:3.9.1
+    container_name: fleet-kafka
+    hostname: kafka
+    restart: unless-stopped
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,EXTERNAL://0.0.0.0:29092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://${KAFKA_EXTERNAL_HOST:-localhost}:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_NUM_PARTITIONS: 12
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_HEAP_OPTS: ${KAFKA_HEAP_OPTS:--Xmx768m -Xms256m}
+      CLUSTER_ID: ${KAFKA_CLUSTER_ID:-fleetKRaftCluster0001}
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    ports:
+      - "${KAFKA_PUBLISHED_PORT:-29092}:29092"
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 20s
+    networks: [fleet]
+
+  kafka-init:
+    image: apache/kafka:3.9.1
+    container_name: fleet-kafka-init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "/init/kafka-init.sh"]
+    environment:
+      KAFKA_BOOTSTRAP: kafka:9092
+    volumes:
+      - ./docker/kafka-init.sh:/init/kafka-init.sh:ro
+    restart: "no"
+    networks: [fleet]
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.8
+    container_name: fleet-clickhouse
+    restart: unless-stopped
+    environment:
+      CLICKHOUSE_DB: ${CLICKHOUSE_DB:-fleet}
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-clickhouse_secret_2026}
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+      - ./clickhouse/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "${CLICKHOUSE_PUBLISHED_PORT:-8123}:8123"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8123/ping >/dev/null 2>&1 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks: [fleet]
+
+  backend-image:
+    image: fleet-telematics/backend:latest
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    command: ["node", "-e", "process.exit(0)"]
+    restart: "no"
+    networks: [fleet]
+
+  migrator:
+    image: fleet-telematics/backend:latest
+    container_name: fleet-migrator
+    command: ["node", "dist/apps/migrator/main.js"]
+    environment: *backend-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      backend-image:
+        condition: service_completed_successfully
+    restart: "no"
+    networks: [fleet]
+
+  gateway:
+    <<: *backend-service
+    container_name: fleet-gateway
+    command: ["node", "dist/apps/gateway/main.js"]
+    environment:
+      <<: *backend-env
+      HTTP_PORT: "3001"
+    ports:
+      - "${GATEWAY_PUBLISHED_PORT:-3001}:3001"
+    volumes:
+      - reports-data:/data/reports
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3001/api/health >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  fleet-core:
+    <<: *backend-service
+    container_name: fleet-core
+    command: ["node", "dist/apps/fleet-core/main.js"]
+    environment:
+      <<: *backend-env
+      HTTP_PORT: "3011"
+      GRPC_URL: 0.0.0.0:50051
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3011/health >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  telemetry-ingest:
+    <<: *backend-service
+    container_name: fleet-telemetry-ingest
+    command: ["node", "dist/apps/telemetry-ingest/main.js"]
+    environment:
+      <<: *backend-env
+      HTTP_PORT: "3012"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3012/health >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  geofence-service:
+    <<: *backend-service
+    container_name: fleet-geofence-service
+    command: ["node", "dist/apps/geofence-service/main.js"]
+    environment:
+      <<: *backend-env
+      HTTP_PORT: "3013"
+      GRPC_URL: 0.0.0.0:50052
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3013/health >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  dispatch-order:
+    <<: *backend-service
+    container_name: fleet-dispatch-order
+    command: ["node", "dist/apps/dispatch-order/main.js"]
+    environment:
+      <<: *backend-env
+      HTTP_PORT: "3014"
+      GRPC_URL: 0.0.0.0:50053
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3014/health >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  analytics:
+    <<: *backend-service
+    container_name: fleet-analytics
+    command: ["node", "dist/apps/analytics/main.js"]
+    environment:
+      <<: *backend-env
+      HTTP_PORT: "3015"
+      GRPC_URL: 0.0.0.0:50054
+    volumes:
+      - reports-data:/data/reports
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3015/health >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  frontend:
+    image: fleet-telematics/frontend:latest
+    container_name: fleet-frontend
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+    restart: unless-stopped
+    environment:
+      NUXT_API_PROXY_TARGET: http://gateway:3001
+      NUXT_PUBLIC_WS_URL: ${PUBLIC_WS_URL:-http://localhost:3001}
+      NUXT_PUBLIC_API_BASE: ""
+    ports:
+      - "${FRONTEND_PUBLISHED_PORT:-3000}:3000"
+    depends_on:
+      gateway:
+        condition: service_healthy
+    networks: [fleet]
+
+  simulator:
+    image: fleet-telematics/backend:latest
+    container_name: fleet-simulator
+    profiles: [simulator]
+    command: ["node", "scripts/simulator/index.mjs"]
+    environment:
+      GATEWAY_URL: http://gateway:3001
+      SIM_LOGIN: ${SIM_LOGIN:-superadmin01}
+      SIM_PASSWORD: ${SIM_PASSWORD:-superadmin01}
+      SIM_VEHICLES: ${SIM_VEHICLES:-8}
+      SIM_INTERVAL_MS: ${SIM_INTERVAL_MS:-2000}
+    depends_on:
+      gateway:
+        condition: service_healthy
+    restart: unless-stopped
+    networks: [fleet]
+
+volumes:
+  postgres-data:
+  redis-data:
+  kafka-data:
+  clickhouse-data:
+  reports-data:
+
+networks:
+  fleet:
+    driver: bridge
