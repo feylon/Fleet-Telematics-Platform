@@ -1,8 +1,8 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, extname } from 'node:path';
 
-const roots = ['apps', 'libs', 'proto', 'frontend/app', 'frontend/nuxt.config.ts', 'clickhouse', 'docker', 'scripts'];
-const extensions = new Set(['.ts', '.vue', '.proto', '.sql', '.mjs', '.js']);
+const roots = ['apps', 'libs', 'proto', 'frontend', 'clickhouse', 'docker', 'scripts'];
+const extensions = new Set(['.ts', '.vue', '.proto', '.sql', '.mjs', '.js', '.css']);
 const skipDirs = new Set(['node_modules', 'dist', '.nuxt', '.output']);
 const slash = String.fromCharCode(47);
 const star = String.fromCharCode(42);
