@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #0ea5e9;
+  --color-primary-soft: #e0f2fe;
+}
+
+html, body, #__nuxt {
+  height: 100%;
+}
+
+body {
+  @apply bg-slate-100 text-slate-800 antialiased;
+}
+
+.btn {
+  @apply inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+.btn-primary {
+  @apply btn bg-primary text-white hover:brightness-110;
+}
+
+.btn-secondary {
+  @apply btn border border-slate-300 bg-white text-slate-700 hover:bg-slate-50;
+}
+
+.btn-danger {
+  @apply btn bg-red-600 text-white hover:bg-red-700;
+}
+
+.btn-xs {
+  @apply px-2 py-1 text-xs;
+}
+
+.input {
+  @apply w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary;
+}
+
+.label {
+  @apply mb-1 block text-xs font-medium uppercase tracking-wide text-slate-500;
+}
+
+.card {
+  @apply rounded-lg border border-slate-200 bg-white shadow-sm;
+}
+
+.card-body {
+  @apply p-4;
+}
+
+.table-dense th {
+  @apply bg-slate-50 px-2 py-1.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500;
+}
+
+.table-dense td {
+  @apply border-t border-slate-100 px-2 py-1.5 text-sm;
+}
+
+.pulse-emergency {
+  animation: pulse-emergency 1s ease-in-out infinite;
+}
+
+@keyframes pulse-emergency {
+  0%, 100% { filter: drop-shadow(0 0 0 rgba(220, 38, 38, 0.9)); }
+  50% { filter: drop-shadow(0 0 8px rgba(220, 38, 38, 0.2)); }
+}
+
+.leaflet-vehicle-icon {
+  background: transparent;
+  border: none;
+}
+
+.marker-cluster-custom {
+  @apply flex items-center justify-center rounded-full bg-primary text-xs font-bold text-white;
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}

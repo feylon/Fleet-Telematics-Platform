@@ -1,0 +1,41 @@
+{
+  "name": "fleet-telematics-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "test": "vitest run",
+    "typecheck": "nuxi typecheck"
+  },
+  "dependencies": {
+    "@nuxtjs/i18n": "^9.5.6",
+    "@nuxtjs/tailwindcss": "^6.14.0",
+    "@pinia/nuxt": "^0.11.3",
+    "apexcharts": "^5.10.0",
+    "dayjs": "^1.11.23",
+    "exceljs": "^4.4.0",
+    "leaflet": "^1.9.4",
+    "leaflet.heat": "^0.2.0",
+    "leaflet.markercluster": "^1.5.3",
+    "nuxt": "^3.21.0",
+    "pdfmake": "^0.2.23",
+    "pinia": "^3.0.4",
+    "socket.io-client": "^4.8.4",
+    "vue": "^3.5.0",
+    "vue3-apexcharts": "^1.11.1"
+  },
+  "devDependencies": {
+    "@types/leaflet": "^1.9.20",
+    "@types/leaflet.markercluster": "^1.5.6",
+    "@types/pdfmake": "^0.3.3",
+    "@vue/test-utils": "^2.5.1",
+    "happy-dom": "^20.14.5",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7",
+    "vue-tsc": "^3.3.12"
+  }
+}
