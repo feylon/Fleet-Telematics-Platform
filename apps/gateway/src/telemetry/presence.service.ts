@@ -4,6 +4,8 @@ import { TelemetryMessage } from '@fleet/common';
 import { REDIS } from '../redis/redis.module';
 import { LastPing } from './status';
 
+export const isNewerPing = (previousTimestamp: string | null, timestamp: string): boolean => !previousTimestamp || new Date(timestamp).getTime() >= new Date(previousTimestamp).getTime();
+
 export const LAST_PING_PREFIX = 'vehicle:last:';
 export const ORG_VEHICLES_PREFIX = 'org:vehicles:';
 const LAST_PING_TTL_SECONDS = 7 * 24 * 3600;
@@ -16,6 +18,7 @@ export class PresenceService {
     const key = `${LAST_PING_PREFIX}${message.vehicleId}`;
     const previous = await this.redis.get(key);
     const previousPing = previous ? (JSON.parse(previous) as LastPing) : null;
+    if (previousPing && !isNewerPing(previousPing.timestamp, message.timestamp)) return previousPing;
     const ping: LastPing = {
       vehicleId: message.vehicleId,
       organizationId: message.organizationId,

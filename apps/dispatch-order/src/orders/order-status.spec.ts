@@ -1,5 +1,5 @@
 import { OrderStatus } from '@fleet/database';
-import { canTransition, driverCanTransition, generateOrderNumber, isActiveStatus } from './order-status';
+import { canTransition, driverCanTransition, generateOrderNumber, isActiveStatus, isUniqueViolation, nextSequence, orderNumberPrefix } from './order-status';
 
 describe('order status machine', () => {
   it('allows the happy path', () => {
@@ -19,6 +19,15 @@ describe('order status machine', () => {
     expect(driverCanTransition(OrderStatus.IN_PROGRESS, OrderStatus.COMPLETED)).toBe(true);
     expect(driverCanTransition(OrderStatus.IN_PROGRESS, OrderStatus.CANCELLED)).toBe(false);
     expect(driverCanTransition(OrderStatus.CREATED, OrderStatus.ASSIGNED)).toBe(false);
+  });
+
+  it('continues numbering from the highest existing number of the day, ignoring deletions', () => {
+    const prefix = orderNumberPrefix(new Date('2026-08-05T10:00:00Z'));
+    expect(prefix).toBe('ORD-20260805-');
+    expect(nextSequence(prefix, ['ORD-20260805-0001', 'ORD-20260805-0007', 'ORD-20260804-0099', 'CUSTOM-1'])).toBe(8);
+    expect(nextSequence(prefix, [])).toBe(1);
+    expect(isUniqueViolation({ code: '23505' })).toBe(true);
+    expect(isUniqueViolation(new Error('x'))).toBe(false);
   });
 
   it('identifies active statuses and formats numbers', () => {

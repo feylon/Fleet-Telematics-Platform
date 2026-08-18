@@ -32,32 +32,35 @@ describe('BatchBuffer', () => {
     await buffer.drain();
   });
 
-  it('keeps rows and rethrows when the flush handler fails so offsets are not committed', async () => {
-    let attempts = 0;
+  it('discards rows on failure, reports the first uncommitted offset per partition and rethrows', async () => {
+    const reported: OffsetMarker[][] = [];
     const buffer = new BatchBuffer<number>(2, 10000, async () => {
-      attempts += 1;
-      if (attempts === 1) throw new Error('clickhouse unavailable');
+      throw new Error('clickhouse unavailable');
+    }, (_error, firstOffsets) => {
+      reported.push(firstOffsets);
     });
-    buffer.push(1, marker(1));
-    buffer.push(2, marker(2));
+    buffer.push(1, marker(7));
+    buffer.push(2, marker(8));
+    buffer.push(3, marker(20, 1));
     await expect(buffer.flush()).rejects.toThrow('clickhouse unavailable');
-    expect(buffer.size).toBe(2);
-    await buffer.flush();
-    expect(attempts).toBe(2);
     expect(buffer.size).toBe(0);
+    expect(reported).toEqual([[marker(7), marker(20, 1)]]);
   });
 
-  it('surfaces a timer flush failure on the next explicit flush', async () => {
+  it('keeps accepting and flushing new rows after a timer flush failure', async () => {
     let attempts = 0;
-    const buffer = new BatchBuffer<number>(1000, 20, async () => {
+    const written: number[][] = [];
+    const buffer = new BatchBuffer<number>(1000, 20, async (rows) => {
       attempts += 1;
       if (attempts === 1) throw new Error('timer failure');
+      written.push(rows);
     });
     buffer.push(1, marker(1));
     await new Promise((resolve) => setTimeout(resolve, 60));
-    await expect(buffer.flush()).rejects.toThrow('timer failure');
-    await buffer.flush();
     expect(buffer.size).toBe(0);
+    buffer.push(2, marker(2));
+    await new Promise((resolve) => setTimeout(resolve, 60));
+    expect(written).toEqual([[2]]);
     await buffer.drain();
   });
 });

@@ -6,6 +6,8 @@ import { Driver, Vehicle } from '@fleet/database';
 import { ClickHouseService } from '../clickhouse/clickhouse.service';
 import { ecoScore } from './eco-score';
 
+export const MAX_RANGE_MS = 92 * 24 * 3600 * 1000;
+
 export interface Range {
   organizationId: string;
   from: string;
@@ -17,6 +19,7 @@ export const parseRange = (range: Range): { organizationId: string; from: string
   const to = range.to ? new Date(range.to) : new Date();
   const from = range.from ? new Date(range.from) : new Date(to.getTime() - 24 * 3600 * 1000);
   if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime()) || from >= to) throw rpcInvalid('Invalid time range');
+  if (to.getTime() - from.getTime() > MAX_RANGE_MS) throw rpcInvalid('Time range may not exceed 92 days');
   return { organizationId: range.organizationId, from: toClickHouseDateTime(from.toISOString()), to: toClickHouseDateTime(to.toISOString()) };
 };
 

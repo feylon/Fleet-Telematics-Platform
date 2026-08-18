@@ -20,7 +20,7 @@ export class KafkaBatchConsumer<T> {
 
   constructor(private readonly options: BatchConsumerOptions<T>) {
     this.consumer = options.kafka.consumer({ groupId: options.groupId, sessionTimeout: 45000, heartbeatInterval: 5000, allowAutoTopicCreation: false, maxBytesPerPartition: 2 * 1024 * 1024 });
-    this.buffer = new BatchBuffer<T>(options.maxSize, options.maxMs, (rows, offsets) => this.flush(rows, offsets));
+    this.buffer = new BatchBuffer<T>(options.maxSize, options.maxMs, (rows, offsets) => this.flush(rows, offsets), (error, firstOffsets) => this.rewind(error, firstOffsets));
   }
 
   get totalWritten(): number {
@@ -56,11 +56,27 @@ export class KafkaBatchConsumer<T> {
       }
       resolveOffset(message.offset);
       if (this.buffer.shouldFlush()) {
-        await this.buffer.flush();
-        await heartbeat();
+        await this.flushOrPause(heartbeat);
       }
     }
     await heartbeat();
+  }
+
+  private async flushOrPause(heartbeat: () => Promise<void>): Promise<void> {
+    try {
+      await this.buffer.flush();
+    } catch (error) {
+      this.options.logger.warn(`flush failed, rewound to last committed offsets: ${(error as Error).message}`);
+      await new Promise((resolve) => setTimeout(resolve, this.options.maxMs));
+    }
+    await heartbeat();
+  }
+
+  private rewind(error: Error, firstOffsets: OffsetMarker[]): void {
+    this.options.logger.warn(`${this.options.topic}: insert failed (${error.message}); seeking ${firstOffsets.length} partition(s) back to the first unwritten offset`);
+    for (const marker of firstOffsets) {
+      this.consumer.seek({ topic: marker.topic, partition: marker.partition, offset: marker.offset });
+    }
   }
 
   private async flush(rows: T[], offsets: OffsetMarker[]): Promise<void> {

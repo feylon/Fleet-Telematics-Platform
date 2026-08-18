@@ -8,6 +8,12 @@ export class CreateOrganizationDto {
   @MaxLength(200)
   name: string;
 
+  @ApiPropertyOptional({ description: 'Telegram chat id receiving this organization\'s urgent alerts' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  telegramChatId?: string;
+
   @ApiProperty({ example: 'uztrans' })
   @IsString()
   @Matches(/^[a-z0-9-]{2,80}$/)
@@ -71,4 +77,10 @@ export class UpdateOrganizationDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @ApiPropertyOptional({ description: 'Telegram chat id receiving this organization\'s urgent alerts' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  telegramChatId?: string;
 }

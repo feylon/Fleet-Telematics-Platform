@@ -46,11 +46,14 @@ export class TelemetryConsumer implements OnModuleInit, OnModuleDestroy {
       partitionsConsumedConcurrently: 4,
       eachMessage: async ({ message }) => {
         if (!message.value) return;
+        let ping: TelemetryMessage;
         try {
-          await this.onTelemetry(JSON.parse(message.value.toString()) as TelemetryMessage);
+          ping = JSON.parse(message.value.toString()) as TelemetryMessage;
         } catch (error) {
-          this.logger.error(`evaluation failed: ${(error as Error).message}`);
+          this.logger.warn(`malformed telemetry skipped: ${(error as Error).message}`);
+          return;
         }
+        await this.onTelemetry(ping);
       },
     });
     this.logger.log('geofence safety consumer running');
@@ -72,22 +75,24 @@ export class TelemetryConsumer implements OnModuleInit, OnModuleDestroy {
       this.routes.forVehicle(ping.organizationId, ping.vehicleId),
       this.states.get(ping.vehicleId),
     ]);
+    if (previous?.lastTimestamp && new Date(ping.timestamp).getTime() < new Date(previous.lastTimestamp).getTime()) return;
     const result = evaluate(ping, previous ?? emptyState(), { geofences, vehicle, route, now: new Date(), timezoneOffsetMinutes: this.timezoneOffsetMinutes });
+    if (result.alerts.length > 0) {
+      await this.producer.publishAlerts(result.alerts);
+      const urgent = result.alerts.filter(isUrgent);
+      if (urgent.length > 0) {
+        await this.notifications.addBulk(
+          urgent.map((alert) => ({
+            name: alert.alertType,
+            data: { organizationId: alert.organizationId, vehicleId: alert.vehicleId, alertType: alert.alertType, severity: alert.severity, details: alert.details, timestamp: alert.timestamp, latitude: alert.latitude, longitude: alert.longitude },
+            opts: { attempts: 3, backoff: { type: 'exponential', delay: 2000 }, removeOnComplete: 1000, removeOnFail: 5000 },
+          })),
+        );
+      }
+      this.emitted += result.alerts.length;
+    }
     await this.states.set(ping.vehicleId, result.state);
     this.processed += 1;
-    if (result.alerts.length === 0) return;
-    await this.producer.publishAlerts(result.alerts);
-    this.emitted += result.alerts.length;
-    const urgent = result.alerts.filter(isUrgent);
-    if (urgent.length > 0) {
-      await this.notifications.addBulk(
-        urgent.map((alert) => ({
-          name: alert.alertType,
-          data: { organizationId: alert.organizationId, vehicleId: alert.vehicleId, alertType: alert.alertType, severity: alert.severity, details: alert.details, timestamp: alert.timestamp, latitude: alert.latitude, longitude: alert.longitude },
-          opts: { attempts: 3, backoff: { type: 'exponential', delay: 2000 }, removeOnComplete: 1000, removeOnFail: 5000 },
-        })),
-      );
-    }
   }
 
   private async onEvent(raw: string | undefined): Promise<void> {

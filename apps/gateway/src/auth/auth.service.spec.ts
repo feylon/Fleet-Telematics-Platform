@@ -40,6 +40,27 @@ class MemoryRedis {
   async get(key: string): Promise<string | null> {
     return this.store.get(key) ?? null;
   }
+  async del(key: string): Promise<void> {
+    this.store.delete(key);
+  }
+  multi() {
+    const ops: Array<() => void> = [];
+    const chain = {
+      set: (key: string, value: string) => {
+        ops.push(() => this.store.set(key, value));
+        return chain;
+      },
+      del: (key: string) => {
+        ops.push(() => this.store.delete(key));
+        return chain;
+      },
+      exec: async () => {
+        ops.forEach((op) => op());
+        return [];
+      },
+    };
+    return chain;
+  }
 }
 
 const meta = { ip: '127.0.0.1', userAgent: 'jest' };
@@ -60,8 +81,9 @@ const build = async () => {
     locale: 'uz',
     isActive: true,
   } as User);
-  const service = new AuthService(users as never, sessions as never, history as never, new JwtService({}), env, redis as never);
-  return { service, users, sessions, history, redis };
+  const organizations = new MemoryRepo<{ id: string; isActive: boolean }>('org');
+  const service = new AuthService(users as never, sessions as never, history as never, organizations as never, new JwtService({}), env, redis as never);
+  return { service, users, sessions, history, redis, organizations };
 };
 
 describe('AuthService', () => {
@@ -89,6 +111,31 @@ describe('AuthService', () => {
     expect(sessions.rows[0].revokedAt).toBeInstanceOf(Date);
     await expect(service.refresh(second.refreshToken, meta)).rejects.toThrow(UnauthorizedException);
     expect(await service.isSessionRevoked(sessions.rows[0].id)).toBe(true);
+  });
+
+  it('derives the principal from the session row, not from token claims, and drops revoked sessions', async () => {
+    const { service, sessions, users } = await build();
+    await service.login('superadmin01', 'superadmin01', 'web', meta);
+    const sessionId = sessions.rows[0].id;
+    const principal = await service.principal(sessionId);
+    expect(principal?.role).toBe(Role.SUPERADMIN);
+    expect(principal?.sub).toBe('user-1');
+    await users.update('user-1', { role: Role.DRIVER } as never);
+    await service.revokeAllForUser('user-1');
+    expect(await service.principal(sessionId)).toBeNull();
+  });
+
+  it('refuses login and principals for a deactivated organization', async () => {
+    const { service, users, organizations, sessions } = await build();
+    await organizations.save({ id: 'org-a', isActive: true } as never);
+    await users.save({ id: 'user-2', login: 'disp', passwordHash: await hashPassword('dispatcher01pass'), role: Role.DISPATCHER, organizationId: 'org-a', fullName: 'D', locale: 'uz', isActive: true } as User);
+    await service.login('disp', 'dispatcher01pass', 'web', meta);
+    const sessionId = sessions.rows[0].id;
+    expect((await service.principal(sessionId))?.organizationId).toBe('org-a');
+    await organizations.update('org-a', { isActive: false } as never);
+    await service.revokeAllForOrganization('org-a');
+    expect(await service.principal(sessionId)).toBeNull();
+    await expect(service.login('disp', 'dispatcher01pass', 'web', meta)).rejects.toThrow(UnauthorizedException);
   });
 
   it('changes password and revokes other sessions', async () => {

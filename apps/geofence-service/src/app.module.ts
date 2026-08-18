@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bullmq';
 import { ClientsModule } from '@nestjs/microservices';
 import { grpcClientOptions, loadEnv } from '@fleet/common';
-import { buildDataSourceOptions, FuelNorm, Geofence, Vehicle } from '@fleet/database';
+import { buildDataSourceOptions, FuelNorm, Geofence, Organization, Vehicle } from '@fleet/database';
 import { envProvider } from './common/env.provider';
 import { redisProvider } from './common/redis.provider';
 import { GeofencesController } from './geofences/geofences.controller';
@@ -24,7 +24,7 @@ const env = loadEnv('geofence-service');
 @Module({
   imports: [
     TypeOrmModule.forRoot(buildDataSourceOptions(env)),
-    TypeOrmModule.forFeature([Geofence, Vehicle, FuelNorm]),
+    TypeOrmModule.forFeature([Geofence, Vehicle, FuelNorm, Organization]),
     BullModule.forRoot({ connection: { host: env.redis.host, port: env.redis.port, password: env.redis.password || undefined } }),
     BullModule.registerQueue({ name: NOTIFICATIONS_QUEUE }),
     ClientsModule.register([{ name: DISPATCH_GRPC, ...grpcClientOptions('dispatch.v1', env.services.dispatchGrpc) }]),

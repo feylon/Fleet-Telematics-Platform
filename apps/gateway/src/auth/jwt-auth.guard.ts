@@ -23,14 +23,15 @@ export class JwtAuthGuard implements CanActivate {
     const header: string | undefined = request.headers['authorization'];
     if (!header || !header.startsWith('Bearer ')) throw new UnauthorizedException('Missing bearer token');
     const token = header.slice(7);
-    let user: AuthUser;
+    let claims: AuthUser;
     try {
-      user = this.jwt.verify<AuthUser>(token, { secret: this.env.jwt.accessSecret });
+      claims = this.jwt.verify<AuthUser>(token, { secret: this.env.jwt.accessSecret });
     } catch {
       throw new UnauthorizedException('Invalid or expired token');
     }
-    if (await this.auth.isSessionRevoked(user.sessionId)) throw new UnauthorizedException('Session terminated');
-    request.user = user;
+    const principal = await this.auth.principal(claims.sessionId);
+    if (!principal || principal.sub !== claims.sub) throw new UnauthorizedException('Session terminated');
+    request.user = principal;
     return true;
   }
 }
