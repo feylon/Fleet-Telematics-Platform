@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ILike, In, Repository } from 'typeorm';
-import { pageOf, rpcDenied, rpcFailed, rpcInvalid, rpcNotFound } from '@fleet/common';
+import { ILike, In, Like, Repository } from 'typeorm';
+import { pageOf, rpcConflict, rpcDenied, rpcFailed, rpcInvalid, rpcNotFound } from '@fleet/common';
 import { Order, OrderStatus, Route, RouteCheckpoint, VehicleStatus } from '@fleet/database';
 import { FleetEventsProducer } from '../events/fleet-events.producer';
 import { FleetClient } from './fleet.client';
 import { applyOrderInput, OrderInput, toOrderMessage } from './order.mapper';
-import { canTransition, driverCanTransition, generateOrderNumber, isActiveStatus } from './order-status';
+import { canTransition, driverCanTransition, generateOrderNumber, isActiveStatus, isUniqueViolation, nextSequence, orderNumberPrefix } from './order-status';
 
 interface ListRequest {
   organizationId: string;
@@ -30,8 +30,18 @@ export class OrdersService {
   async create(input: OrderInput) {
     this.validate(input);
     const order = applyOrderInput(this.orders.create({ status: OrderStatus.CREATED }), input);
-    order.orderNumber = input.orderNumber && input.orderNumber !== '' ? input.orderNumber : await this.nextNumber(input.organizationId);
-    const saved = await this.orders.save(order);
+    const custom = input.orderNumber && input.orderNumber !== '' ? input.orderNumber.trim() : null;
+    let saved: Order | null = null;
+    for (let attempt = 0; attempt < 5 && !saved; attempt++) {
+      order.orderNumber = custom ?? (await this.nextNumber(input.organizationId));
+      try {
+        saved = await this.orders.save(order);
+      } catch (error) {
+        if (!isUniqueViolation(error)) throw error;
+        if (custom) throw rpcConflict('Order number already exists');
+      }
+    }
+    if (!saved) throw rpcConflict('Could not allocate an order number');
     await this.events.emit(saved.organizationId, 'order.changed', saved.id, { action: 'created' });
     return this.present(saved);
   }
@@ -125,10 +135,10 @@ export class OrdersService {
   }
 
   private async nextNumber(organizationId: string): Promise<string> {
-    const start = new Date();
-    start.setUTCHours(0, 0, 0, 0);
-    const count = await this.orders.createQueryBuilder('o').where('o.organizationId = :organizationId', { organizationId }).andWhere('o.createdAt >= :start', { start }).getCount();
-    return generateOrderNumber(new Date(), count + 1);
+    const now = new Date();
+    const prefix = orderNumberPrefix(now);
+    const existing = await this.orders.find({ where: { organizationId, orderNumber: Like(`${prefix}%`) }, select: { orderNumber: true } });
+    return generateOrderNumber(now, nextSequence(prefix, existing.map((row) => row.orderNumber)));
   }
 
   private async findScoped(id: string, organizationId: string): Promise<Order> {

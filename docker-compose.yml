@@ -9,7 +9,7 @@ x-backend-env: &backend-env
   POSTGRES_DB: ${POSTGRES_DB:-fleet}
   REDIS_HOST: redis
   REDIS_PORT: "6379"
-  REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+  REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_secret_2026}
   KAFKA_BROKERS: kafka:9092
   CLICKHOUSE_URL: http://clickhouse:8123
   CLICKHOUSE_USER: ${CLICKHOUSE_USER:-default}
@@ -24,6 +24,8 @@ x-backend-env: &backend-env
   DISPATCH_GRPC_URL: dispatch-order:50053
   ANALYTICS_GRPC_URL: analytics:50054
   CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+  TRUST_PROXY: ${TRUST_PROXY:-172.28.0.0/16}
+  BODY_LIMIT: ${BODY_LIMIT:-1mb}
   TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
   TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
   REPORTS_DIR: /data/reports
@@ -59,7 +61,7 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
     ports:
-      - "${POSTGRES_PUBLISHED_PORT:-5432}:5432"
+      - "${BIND_HOST:-127.0.0.1}:${POSTGRES_PUBLISHED_PORT:-5432}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-fleet} -d ${POSTGRES_DB:-fleet}"]
       interval: 5s
@@ -71,13 +73,13 @@ services:
     image: redis:7-alpine
     container_name: fleet-redis
     restart: unless-stopped
-    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "512mb", "--maxmemory-policy", "allkeys-lru"]
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "512mb", "--maxmemory-policy", "noeviction", "--requirepass", "${REDIS_PASSWORD:-redis_secret_2026}"]
     volumes:
       - redis-data:/data
     ports:
-      - "${REDIS_PUBLISHED_PORT:-6379}:6379"
+      - "${BIND_HOST:-127.0.0.1}:${REDIS_PUBLISHED_PORT:-6379}:6379"
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD-SHELL", "redis-cli -a \"${REDIS_PASSWORD:-redis_secret_2026}\" ping | grep -q PONG"]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -110,7 +112,7 @@ services:
     volumes:
       - kafka-data:/var/lib/kafka/data
     ports:
-      - "${KAFKA_PUBLISHED_PORT:-29092}:29092"
+      - "${BIND_HOST:-127.0.0.1}:${KAFKA_PUBLISHED_PORT:-29092}:29092"
     healthcheck:
       test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1"]
       interval: 10s
@@ -150,7 +152,7 @@ services:
       - clickhouse-data:/var/lib/clickhouse
       - ./clickhouse/init:/docker-entrypoint-initdb.d:ro
     ports:
-      - "${CLICKHOUSE_PUBLISHED_PORT:-8123}:8123"
+      - "${BIND_HOST:-127.0.0.1}:${CLICKHOUSE_PUBLISHED_PORT:-8123}:8123"
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8123/ping >/dev/null 2>&1 || exit 1"]
       interval: 5s
@@ -319,3 +321,6 @@ volumes:
 networks:
   fleet:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16

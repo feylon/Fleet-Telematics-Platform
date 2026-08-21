@@ -52,12 +52,15 @@ recomputed with `POST /api/analytics/daily/recompute?from=&to=`.
 - `gateway` is horizontally scalable (each replica joins Kafka with its own live group id); put a load balancer with sticky
   sessions or enable the Socket.io Redis adapter for multi-node WebSocket fan-out.
 - `telemetry-ingest` and `geofence-service` scale up to the partition count of `telemetry.raw` (12).
+- Infrastructure ports (PostgreSQL, Redis, Kafka, ClickHouse) are bound to `BIND_HOST` (default `127.0.0.1`); Redis requires
+  `REDIS_PASSWORD` and runs with `noeviction` because BullMQ queues live there.
 - Increase `INGEST_BATCH_SIZE` for higher throughput, keep `INGEST_BATCH_MS` ≤ 1000 for freshness.
 - Kafka single broker is for one node; for a cluster raise replication factors in `docker/kafka-init.sh`.
 
 ## Notifications
 
-Set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` and restart `geofence-service`. Urgent alerts (CRITICAL severity,
+Set `TELEGRAM_BOT_TOKEN` (global) and either a per-organization `telegramChatId` (superadmin → organization settings) or the
+fallback `TELEGRAM_CHAT_ID`; restart `geofence-service` after changing the token. Urgent alerts (CRITICAL severity,
 geofence enter/exit, fuel drop, SOS) are queued in BullMQ `notifications` with three retries and exponential backoff.
 
 ## Troubleshooting

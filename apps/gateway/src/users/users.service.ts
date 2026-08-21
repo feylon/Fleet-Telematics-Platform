@@ -85,9 +85,11 @@ export class UsersService {
     const user = await this.get(actor, id);
     if (!canManageRole(actor.role, user.role)) throw new ForbiddenException('Not allowed to manage this user');
     if (dto.role && !canManageRole(actor.role, dto.role)) throw new ForbiddenException('Not allowed to assign this role');
+    const roleChanged = dto.role !== undefined && dto.role !== user.role;
     Object.assign(user, dto);
+    if (dto.role === Role.SUPERADMIN) user.organizationId = null;
     const saved = await this.users.save(user);
-    if (dto.isActive === false) await this.revokeAll(user.id);
+    if (dto.isActive === false || roleChanged) await this.revokeAll(user.id);
     return publicUser(saved);
   }
 
@@ -139,9 +141,6 @@ export class UsersService {
   }
 
   private async revokeAll(userId: string): Promise<void> {
-    const rows = await this.sessions.find({ where: { userId } });
-    for (const row of rows) {
-      if (!row.revokedAt) await this.auth.revokeSession(row.id);
-    }
+    await this.auth.revokeAllForUser(userId);
   }
 }

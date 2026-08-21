@@ -4,7 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import Redis from 'ioredis';
 import { PlatformEnv, hashPassword, verifyPassword, sha256Hex, randomToken } from '@fleet/common';
-import { LoginHistory, User, UserSession } from '@fleet/database';
+import { LoginHistory, Organization, User, UserSession } from '@fleet/database';
 import { ENV } from '../common/env.provider';
 import { REDIS } from '../redis/redis.module';
 import { AuthUser, RequestMeta } from '../common/auth-user';
@@ -23,6 +23,8 @@ interface RefreshPayload {
 }
 
 export const REVOKED_SESSION_PREFIX = 'session:revoked:';
+export const PRINCIPAL_PREFIX = 'session:principal:';
+const PRINCIPAL_TTL_SECONDS = 60;
 
 @Injectable()
 export class AuthService {
@@ -30,6 +32,7 @@ export class AuthService {
     @InjectRepository(User) private readonly users: Repository<User>,
     @InjectRepository(UserSession) private readonly sessions: Repository<UserSession>,
     @InjectRepository(LoginHistory) private readonly history: Repository<LoginHistory>,
+    @InjectRepository(Organization) private readonly organizations: Repository<Organization>,
     private readonly jwt: JwtService,
     @Inject(ENV) private readonly env: PlatformEnv,
     @Inject(REDIS) private readonly redis: Redis,
@@ -45,6 +48,10 @@ export class AuthService {
     if (!valid) {
       await this.recordLogin(user.id, login, meta, false, 'bad_password');
       throw new UnauthorizedException('Invalid credentials');
+    }
+    if (!(await this.organizationActive(user.organizationId))) {
+      await this.recordLogin(user.id, login, meta, false, 'organization_inactive');
+      throw new UnauthorizedException('Organization is deactivated');
     }
     const session = await this.sessions.save(
       this.sessions.create({
@@ -80,6 +87,7 @@ export class AuthService {
     }
     const user = await this.users.findOne({ where: { id: session.userId } });
     if (!user || !user.isActive) throw new UnauthorizedException('User is not active');
+    if (!(await this.organizationActive(user.organizationId))) throw new UnauthorizedException('Organization is deactivated');
     await this.sessions.update(session.id, { lastUsedAt: new Date(), ip: meta.ip ?? session.ip });
     return this.issueTokens(user, session.id);
   }
@@ -102,7 +110,39 @@ export class AuthService {
 
   async revokeSession(sessionId: string): Promise<void> {
     await this.sessions.update(sessionId, { revokedAt: new Date() });
-    await this.redis.set(`${REVOKED_SESSION_PREFIX}${sessionId}`, '1', 'EX', this.env.jwt.accessTtlSeconds + 60);
+    await this.redis.multi().set(`${REVOKED_SESSION_PREFIX}${sessionId}`, '1', 'EX', this.env.jwt.accessTtlSeconds + 60).del(`${PRINCIPAL_PREFIX}${sessionId}`).exec();
+  }
+
+  async revokeAllForUser(userId: string): Promise<void> {
+    const rows = await this.sessions.find({ where: { userId } });
+    for (const row of rows) {
+      if (!row.revokedAt) await this.revokeSession(row.id);
+    }
+  }
+
+  async revokeAllForOrganization(organizationId: string): Promise<void> {
+    const users = await this.users.find({ where: { organizationId } });
+    for (const user of users) await this.revokeAllForUser(user.id);
+  }
+
+  async principal(sessionId: string): Promise<AuthUser | null> {
+    const cached = await this.redis.get(`${PRINCIPAL_PREFIX}${sessionId}`);
+    if (cached) return JSON.parse(cached) as AuthUser;
+    if (await this.redis.get(`${REVOKED_SESSION_PREFIX}${sessionId}`)) return null;
+    const session = await this.sessions.findOne({ where: { id: sessionId } });
+    if (!session || session.revokedAt || session.expiresAt.getTime() < Date.now()) return null;
+    const user = await this.users.findOne({ where: { id: session.userId } });
+    if (!user || !user.isActive) return null;
+    if (!(await this.organizationActive(user.organizationId))) return null;
+    const principal: AuthUser = { sub: user.id, login: user.login, role: user.role, organizationId: user.organizationId, sessionId, fullName: user.fullName, locale: user.locale };
+    await this.redis.set(`${PRINCIPAL_PREFIX}${sessionId}`, JSON.stringify(principal), 'EX', PRINCIPAL_TTL_SECONDS);
+    return principal;
+  }
+
+  async organizationActive(organizationId: string | null): Promise<boolean> {
+    if (!organizationId) return true;
+    const organization = await this.organizations.findOne({ where: { id: organizationId } });
+    return Boolean(organization?.isActive);
   }
 
   async isSessionRevoked(sessionId: string): Promise<boolean> {

@@ -66,6 +66,8 @@ export interface PlatformEnv {
     analyticsGrpc: string;
   };
   corsOrigins: string[];
+  trustProxy: string;
+  bodyLimit: string;
   telegramBotToken: string;
   telegramChatId: string;
   reportsDir: string;
@@ -114,9 +116,15 @@ export const loadEnv = (serviceName: string): PlatformEnv => ({
     analyticsGrpc: read('ANALYTICS_GRPC_URL', 'analytics:50054'),
   },
   corsOrigins: readList('CORS_ORIGINS', ['http://localhost:3000']),
+  trustProxy: read('TRUST_PROXY', 'loopback'),
+  bodyLimit: read('BODY_LIMIT', '1mb'),
   telegramBotToken: read('TELEGRAM_BOT_TOKEN', ''),
   telegramChatId: read('TELEGRAM_CHAT_ID', ''),
   reportsDir: read('REPORTS_DIR', '/data/reports'),
   ingestBatchSize: readInt('INGEST_BATCH_SIZE', 1000),
   ingestBatchMs: readInt('INGEST_BATCH_MS', 1000),
 });
+
+export const DEFAULT_JWT_SECRETS = new Set(['change-me-access', 'change-me-refresh', 'c0f9b1e2d4a64c7f8e9a1b2c3d4e5f60718293a4b5c6d7e8f9a0b1c2d3e4f5a6', '7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0d9c8b7a6f']);
+
+export const usesDefaultJwtSecrets = (env: PlatformEnv): boolean => DEFAULT_JWT_SECRETS.has(env.jwt.accessSecret) || DEFAULT_JWT_SECRETS.has(env.jwt.refreshSecret) || env.jwt.accessSecret.length < 32 || env.jwt.refreshSecret.length < 32;

@@ -16,9 +16,7 @@ export const CurrentUser = createParamDecorator((_: unknown, context: ExecutionC
 });
 
 export const extractRequestMeta = (request: { headers: Record<string, string | string[] | undefined>; ip?: string; socket?: { remoteAddress?: string } }): RequestMeta => {
-  const forwarded = request.headers['x-forwarded-for'];
-  const forwardedIp = Array.isArray(forwarded) ? forwarded[0] : forwarded?.split(',')[0]?.trim();
-  const ip = forwardedIp || request.ip || request.socket?.remoteAddress || null;
+  const ip = request.ip || request.socket?.remoteAddress || null;
   const userAgentHeader = request.headers['user-agent'];
   const userAgent = Array.isArray(userAgentHeader) ? userAgentHeader[0] : userAgentHeader ?? null;
   return { ip, userAgent: userAgent ? userAgent.slice(0, 400) : null };

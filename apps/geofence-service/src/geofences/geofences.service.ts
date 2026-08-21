@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { rpcNotFound } from '@fleet/common';
-import { Geofence } from '@fleet/database';
+import { Geofence, Vehicle } from '@fleet/database';
 import { FleetEventsProducer } from '../alerts/fleet-events.producer';
 import { GeofenceCache } from '../rules/geofence-cache';
 import { VehicleStateStore } from '../rules/vehicle-state.store';
@@ -12,6 +12,7 @@ import { applyGeofenceInput, GeofenceInput, toGeofenceMessage } from './geofence
 export class GeofencesService {
   constructor(
     @InjectRepository(Geofence) private readonly geofences: Repository<Geofence>,
+    @InjectRepository(Vehicle) private readonly vehicles: Repository<Vehicle>,
     private readonly events: FleetEventsProducer,
     private readonly cache: GeofenceCache,
     private readonly states: VehicleStateStore,
@@ -47,6 +48,8 @@ export class GeofencesService {
   }
 
   async vehicleState(organizationId: string, vehicleId: string) {
+    const vehicle = await this.vehicles.findOne({ where: { id: vehicleId, organizationId } });
+    if (!vehicle) throw rpcNotFound('Vehicle not found');
     const state = await this.states.get(vehicleId);
     return { insideGeofenceIds: state?.insideGeofenceIds ?? [], lastEvaluatedAt: state?.lastTimestamp ?? '' };
   }

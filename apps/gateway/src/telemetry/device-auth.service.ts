@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import Redis from 'ioredis';
 import { sha256Hex } from '@fleet/common';
-import { Device, Vehicle } from '@fleet/database';
+import { Device, Organization, Vehicle } from '@fleet/database';
 import { REDIS } from '../redis/redis.module';
 
 export interface DeviceBinding {
@@ -24,6 +24,7 @@ export class DeviceAuthService {
   constructor(
     @InjectRepository(Device) private readonly devices: Repository<Device>,
     @InjectRepository(Vehicle) private readonly vehicles: Repository<Vehicle>,
+    @InjectRepository(Organization) private readonly organizations: Repository<Organization>,
     @Inject(REDIS) private readonly redis: Redis,
   ) {}
 
@@ -47,8 +48,8 @@ export class DeviceAuthService {
       await this.redis.set(key, 'null', 'EX', 15);
       return null;
     }
-    const vehicle = await this.vehicles.findOne({ where: { id: device.vehicleId } });
-    if (!vehicle) {
+    const [vehicle, organization] = await Promise.all([this.vehicles.findOne({ where: { id: device.vehicleId } }), this.organizations.findOne({ where: { id: device.organizationId } })]);
+    if (!vehicle || !organization?.isActive) {
       await this.redis.set(key, 'null', 'EX', 15);
       return null;
     }

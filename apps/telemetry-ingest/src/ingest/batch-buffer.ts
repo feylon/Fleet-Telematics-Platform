@@ -5,23 +5,26 @@ export interface OffsetMarker {
 }
 
 export type FlushHandler<T> = (rows: T[], offsets: OffsetMarker[]) => Promise<void>;
+export type FlushErrorHandler = (error: Error, firstOffsets: OffsetMarker[]) => Promise<void> | void;
 
 export class BatchBuffer<T> {
   private rows: T[] = [];
-  private readonly offsets = new Map<string, OffsetMarker>();
+  private readonly lastOffsets = new Map<string, OffsetMarker>();
+  private readonly firstOffsets = new Map<string, OffsetMarker>();
   private timer: NodeJS.Timeout | null = null;
   private flushing: Promise<void> | null = null;
-  private lastError: Error | null = null;
 
-  constructor(private readonly maxSize: number, private readonly maxMs: number, private readonly onFlush: FlushHandler<T>) {}
+  constructor(private readonly maxSize: number, private readonly maxMs: number, private readonly onFlush: FlushHandler<T>, private readonly onError: FlushErrorHandler = () => undefined) {}
 
   get size(): number {
     return this.rows.length;
   }
 
   push(row: T, marker: OffsetMarker): void {
+    const key = `${marker.topic}:${marker.partition}`;
     this.rows.push(row);
-    this.offsets.set(`${marker.topic}:${marker.partition}`, marker);
+    this.lastOffsets.set(key, marker);
+    if (!this.firstOffsets.has(key)) this.firstOffsets.set(key, marker);
     if (!this.timer) this.timer = setTimeout(() => void this.flushFromTimer(), this.maxMs);
   }
 
@@ -29,27 +32,31 @@ export class BatchBuffer<T> {
     return this.rows.length >= this.maxSize;
   }
 
+  pendingFirstOffsets(): OffsetMarker[] {
+    return [...this.firstOffsets.values()];
+  }
+
+  discard(): void {
+    this.clearTimer();
+    this.rows = [];
+    this.lastOffsets.clear();
+    this.firstOffsets.clear();
+  }
+
   async flush(): Promise<void> {
     if (this.flushing) await this.flushing;
-    if (this.lastError) {
-      const error = this.lastError;
-      this.lastError = null;
-      throw error;
-    }
     if (this.rows.length === 0) return;
     this.clearTimer();
     const rows = this.rows;
+    const offsets = [...this.lastOffsets.values()];
+    const firstOffsets = [...this.firstOffsets.values()];
     this.rows = [];
-    const offsets = [...this.offsets.values()];
+    this.lastOffsets.clear();
+    this.firstOffsets.clear();
     this.flushing = this.onFlush(rows, offsets)
-      .then(() => {
-        for (const marker of offsets) {
-          const key = `${marker.topic}:${marker.partition}`;
-          if (this.offsets.get(key)?.offset === marker.offset) this.offsets.delete(key);
-        }
-      })
-      .catch((error: Error) => {
-        this.rows = rows.concat(this.rows);
+      .catch(async (error: Error) => {
+        this.discard();
+        await this.onError(error, firstOffsets);
         throw error;
       })
       .finally(() => {
@@ -67,8 +74,8 @@ export class BatchBuffer<T> {
     this.timer = null;
     try {
       await this.flush();
-    } catch (error) {
-      this.lastError = error as Error;
+    } catch {
+      return;
     }
   }
 

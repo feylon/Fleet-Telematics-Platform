@@ -25,6 +25,9 @@ Muhim o'zgaruvchilar (`docker-compose.yml` ichida `${...:-default}` ko'rinishida
 | `PUBLIC_WS_URL` | Brauzer uchun Socket.io manzili (gateway tashqi manzili, masalan `https://api.fleet.example.uz`) |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | Telegram bildirishnomalari (bo'sh bo'lsa faqat logga yoziladi) |
 | `KAFKA_EXTERNAL_HOST` | Kafka'ga tashqaridan ulanish uchun host nomi (standart `localhost`) |
+| `REDIS_PASSWORD` | Redis paroli (BullMQ navbatlari shu yerda) |
+| `BIND_HOST` | Infratuzilma portlari (5432, 6379, 8123, 29092) qaysi interfeysga ochilishi; standart `127.0.0.1` |
+| `TRUST_PROXY` | `X-Forwarded-For` sarlavhasiga ishoniladigan manzillar (standart ichki tarmoq `172.28.0.0/16`) |
 
 ## 2. Ishga tushirish
 

@@ -1,5 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { PlatformEnv } from '@fleet/common';
+import { Organization } from '@fleet/database';
 import { ENV } from '../common/env.provider';
 import { NotificationJob } from './notifications.queue';
 
@@ -15,21 +18,29 @@ export const formatTelegramMessage = (job: NotificationJob): string => {
 export class TelegramSender {
   private readonly logger = new Logger(TelegramSender.name);
 
-  constructor(@Inject(ENV) private readonly env: PlatformEnv) {}
+  private readonly chatCache = new Map<string, { chatId: string | null; at: number }>();
 
-  get enabled(): boolean {
-    return Boolean(this.env.telegramBotToken && this.env.telegramChatId);
+  constructor(@Inject(ENV) private readonly env: PlatformEnv, @InjectRepository(Organization) private readonly organizations: Repository<Organization>) {}
+
+  async chatIdFor(organizationId: string): Promise<string | null> {
+    const cached = this.chatCache.get(organizationId);
+    if (cached && Date.now() - cached.at < 60000) return cached.chatId;
+    const organization = await this.organizations.findOne({ where: { id: organizationId } });
+    const chatId = organization?.telegramChatId || this.env.telegramChatId || null;
+    this.chatCache.set(organizationId, { chatId, at: Date.now() });
+    return chatId;
   }
 
   async send(job: NotificationJob): Promise<void> {
-    if (!this.enabled) {
-      this.logger.log(`notification (telegram disabled): ${job.alertType} ${job.severity} ${job.details}`);
+    const chatId = this.env.telegramBotToken ? await this.chatIdFor(job.organizationId) : null;
+    if (!chatId) {
+      this.logger.log(`notification (telegram not configured for ${job.organizationId}): ${job.alertType} ${job.severity} ${job.details}`);
       return;
     }
     const response = await fetch(`https://api.telegram.org/bot${this.env.telegramBotToken}/sendMessage`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ chat_id: this.env.telegramChatId, text: formatTelegramMessage(job), disable_web_page_preview: true }),
+      body: JSON.stringify({ chat_id: chatId, text: formatTelegramMessage(job), disable_web_page_preview: true }),
     });
     if (!response.ok) throw new Error(`telegram responded ${response.status}`);
   }

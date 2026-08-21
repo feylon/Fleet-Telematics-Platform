@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { getMetadataArgsStorage } from 'typeorm';
 import { ALL_ENTITIES } from './index';
 import { InitialSchema1753860000000 } from '../migrations/1753860000000-InitialSchema';
+import { OrganizationTelegram1753870000000 } from '../migrations/1753870000000-OrganizationTelegram';
 
 describe('database entities', () => {
   it('registers fifteen tables', () => {
@@ -25,6 +26,7 @@ describe('database entities', () => {
     const statements: string[] = [];
     const runner = { query: async (sql: string) => { statements.push(sql); } };
     await new InitialSchema1753860000000().up(runner as never);
+    await new OrganizationTelegram1753870000000().up(runner as never);
     const ddl = statements.join('\n');
     const columns = getMetadataArgsStorage().columns.filter((column) => ALL_ENTITIES.includes(column.target as never));
     for (const column of columns) {

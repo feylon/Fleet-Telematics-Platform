@@ -5,6 +5,7 @@ import { ILike, Repository } from 'typeorm';
 import { Organization, Role, User, Vehicle, Driver } from '@fleet/database';
 import { Roles } from '../common/decorators';
 import { paginationOf } from '../common/tenant';
+import { AuthService } from '../auth/auth.service';
 import { CreateOrganizationDto, UpdateOrganizationDto } from './organizations.dto';
 
 @ApiTags('Superadmin')
@@ -17,6 +18,7 @@ export class OrganizationsController {
     @InjectRepository(User) private readonly users: Repository<User>,
     @InjectRepository(Vehicle) private readonly vehicles: Repository<Vehicle>,
     @InjectRepository(Driver) private readonly drivers: Repository<Driver>,
+    private readonly auth: AuthService,
   ) {}
 
   @Get()
@@ -59,7 +61,9 @@ export class OrganizationsController {
   async update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateOrganizationDto) {
     const org = await this.get(id);
     Object.assign(org, dto);
-    return this.organizations.save(org);
+    const saved = await this.organizations.save(org);
+    if (dto.isActive === false) await this.auth.revokeAllForOrganization(id);
+    return saved;
   }
 
   @Delete(':id')
@@ -67,6 +71,7 @@ export class OrganizationsController {
   @ApiOperation({ summary: 'Delete organization and all tenant data' })
   async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     await this.get(id);
+    await this.auth.revokeAllForOrganization(id);
     await this.organizations.delete(id);
   }
 }

@@ -56,7 +56,7 @@ entrypoint per service. The frontend has its own image.
 | frontend | frontend image | Nuxt SSR, proxies `/api` and `/socket.io` to gateway |
 
 Exposed ports: frontend 3000, gateway 3001 (REST, Swagger, Socket.io), ClickHouse 8123, Postgres 5432,
-Kafka 9092 (host listener), Redis 6379.
+Kafka 29092 (host listener, internal listener 9092), Redis 6379.
 
 ## 4. Kafka topology
 
@@ -96,15 +96,16 @@ orders, routes, route_checkpoints, maintenance_logs, fuel_norms.
 `vehicle_telemetry` MergeTree, partition `toYYYYMM(timestamp)`, order `(organization_id, vehicle_id, timestamp)`,
 columns exactly as specified plus `organization_id UUID`, `sos UInt8`.
 
-`telemetry_alerts` MergeTree, order `(organization_id, alert_type, timestamp)`, `alert_type Enum8`, `severity Enum8`,
-`details String`, `latitude`, `longitude`.
+`telemetry_alerts` MergeTree, order `(organization_id, alert_type, timestamp)`, `alert_type Enum8` (spec types plus
+GEOFENCE_ENTER, UNAUTHORIZED_STOP, ROUTE_DEVIATION, SOS, TIME_WINDOW_VIOLATION), `severity Enum8`, `details String`,
+`latitude`, `longitude`, `geofence_id`, `order_id`.
 
-`vehicle_daily_rollup` SummingMergeTree built nightly by the analytics BullMQ job (mileage, moving/idle seconds,
+`vehicle_daily_rollup` ReplacingMergeTree(computed_at) built nightly (recomputing a day replaces it; chosen over SummingMergeTree so recomputes stay idempotent) by the analytics BullMQ job (mileage, moving/idle seconds,
 max speed, fuel consumed, harsh events) to make dashboards cheap.
 
 ### Redis
 
-`vehicle:last:{vehicleId}` hash (last ping, TTL 10 min), `org:vehicles:{orgId}` set, `geofence:state:{vehicleId}`
+`vehicle:last:{vehicleId}` JSON (last ping, TTL 7 days so the last known position survives long offline periods; OFFLINE status is derived after 5 minutes), `org:vehicles:{orgId}` set, `geofence:state:{vehicleId}`
 set of geofence ids the vehicle is inside, `device:{imei}` cached vehicle binding, rate-limit buckets,
 BullMQ queues `notifications`, `reports`, `rollups`.
 

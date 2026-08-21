@@ -23,6 +23,9 @@ export class Organization {
   @Column({ type: 'varchar', length: 10, default: 'uz' })
   defaultLocale: string;
 
+  @Column({ type: 'varchar', length: 64, nullable: true })
+  telegramChatId: string | null;
+
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
 
