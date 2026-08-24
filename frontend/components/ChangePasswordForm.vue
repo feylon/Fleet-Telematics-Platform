@@ -1,7 +1,7 @@
 <template>
   <form class="card card-body space-y-3" @submit.prevent="submit">
-    <h3 class="text-sm font-semibold">{{ t('auth.changePassword') }}</h3>
-    <p v-if="auth.user?.mustChangePassword" class="rounded bg-amber-50 px-2 py-1 text-xs text-amber-700">{{ t('auth.mustChange') }}</p>
+    <h3 class="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500"><Icon name="key" :size="14" />{{ t('auth.changePassword') }}</h3>
+    <p v-if="auth.user?.mustChangePassword" class="flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700"><Icon name="alert-triangle" :size="14" />{{ t('auth.mustChange') }}</p>
     <div>
       <label class="label">{{ t('auth.currentPassword') }}</label>
       <input v-model="form.current" type="password" class="input" required autocomplete="current-password" />
@@ -10,7 +10,7 @@
       <label class="label">{{ t('auth.newPassword') }}</label>
       <input v-model="form.next" type="password" class="input" required minlength="8" autocomplete="new-password" />
     </div>
-    <button class="btn-primary" :disabled="busy">{{ t('common.save') }}</button>
+    <button class="btn-primary" :disabled="busy"><Icon name="check" :size="16" />{{ t('common.save') }}</button>
   </form>
 </template>
 

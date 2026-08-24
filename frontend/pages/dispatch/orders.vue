@@ -1,19 +1,19 @@
 <template>
   <div class="space-y-3">
     <PageHeader :title="t('orders.title')">
-      <button class="btn-secondary" @click="load">{{ t('common.refresh') }}</button>
-      <button class="btn-primary" @click="openCreate">{{ t('orders.new') }}</button>
+      <button class="btn-secondary" @click="load"><Icon name="refresh" :size="16" />{{ t('common.refresh') }}</button>
+      <button class="btn-primary" @click="openCreate"><Icon name="plus" :size="16" />{{ t('orders.new') }}</button>
     </PageHeader>
     <DataTable :columns="columns" :rows="rows" :loading="loading" row-key="id" :export-title="t('orders.title')" @row-click="openDetail">
       <template #cell-status="{ value }"><StatusBadge :value="value" kind="order" /></template>
       <template #cell-priority="{ value }">{{ t(`orders.${value}`) }}</template>
       <template #actions="{ row }">
-        <button class="btn-secondary btn-xs" @click.stop="openDetail(row)">{{ t('common.more') }}</button>
-        <button v-if="['CREATED', 'ASSIGNED'].includes(row.status)" class="btn-secondary btn-xs ml-1" @click.stop="openAssign(row)">{{ t('orders.assign') }}</button>
-        <button v-if="row.status !== 'COMPLETED' && row.status !== 'CANCELLED'" class="btn-secondary btn-xs ml-1" @click.stop="openEdit(row)">{{ t('common.edit') }}</button>
-        <button v-if="row.status === 'ASSIGNED'" class="btn-secondary btn-xs ml-1" @click.stop="transition(row, 'IN_PROGRESS')">{{ t('orders.start') }}</button>
-        <button v-if="row.status === 'IN_PROGRESS'" class="btn-secondary btn-xs ml-1" @click.stop="transition(row, 'COMPLETED')">{{ t('orders.complete') }}</button>
-        <ConfirmButton v-if="['CREATED', 'ASSIGNED', 'IN_PROGRESS'].includes(row.status)" klass="btn-danger btn-xs ml-1" :message="t('orders.cancel') + '?'" @confirm="transition(row, 'CANCELLED')">{{ t('orders.cancel') }}</ConfirmButton>
+        <button class="btn-secondary btn-xs" @click.stop="openDetail(row)"><Icon name="route" :size="13" />{{ t('common.more') }}</button>
+        <button v-if="['CREATED', 'ASSIGNED'].includes(row.status)" class="btn-secondary btn-xs" @click.stop="openAssign(row)"><Icon name="truck" :size="13" />{{ t('orders.assign') }}</button>
+        <button v-if="row.status !== 'COMPLETED' && row.status !== 'CANCELLED'" class="btn-secondary btn-xs" @click.stop="openEdit(row)"><Icon name="pencil" :size="13" />{{ t('common.edit') }}</button>
+        <button v-if="row.status === 'ASSIGNED'" class="btn-secondary btn-xs" @click.stop="transition(row, 'IN_PROGRESS')"><Icon name="play" :size="13" />{{ t('orders.start') }}</button>
+        <button v-if="row.status === 'IN_PROGRESS'" class="btn-secondary btn-xs" @click.stop="transition(row, 'COMPLETED')"><Icon name="check" :size="13" />{{ t('orders.complete') }}</button>
+        <ConfirmButton v-if="['CREATED', 'ASSIGNED', 'IN_PROGRESS'].includes(row.status)" klass="btn-danger btn-xs" :message="t('orders.cancel') + '?'" @confirm="transition(row, 'CANCELLED')">{{ t('orders.cancel') }}</ConfirmButton>
       </template>
     </DataTable>
 
@@ -33,18 +33,18 @@
         <div><label class="label">{{ t('orders.plannedStart') }}</label><input v-model="form.plannedStartAt" type="datetime-local" class="input" /></div>
         <div><label class="label">{{ t('orders.plannedEnd') }}</label><input v-model="form.plannedEndAt" type="datetime-local" class="input" /></div>
         <div><label class="label">{{ t('orders.notes') }}</label><input v-model="form.notes" class="input" /></div>
-        <div class="flex justify-end gap-2 md:col-span-3"><button type="button" class="btn-secondary" @click="modal = null">{{ t('common.cancel') }}</button><button class="btn-primary">{{ t('common.save') }}</button></div>
+        <div class="flex justify-end gap-2 md:col-span-3"><button type="button" class="btn-secondary" @click="modal = null">{{ t('common.cancel') }}</button><button class="btn-primary"><Icon name="check" :size="16" />{{ t('common.save') }}</button></div>
       </form>
     </Modal>
 
     <Modal :open="modal === 'assign'" :title="t('orders.assign')" @close="modal = null">
       <div class="mb-2 text-xs text-slate-500">{{ selected?.orderNumber }} · {{ selected?.originAddress }}</div>
-      <div class="mb-3 text-sm font-semibold">{{ t('orders.nearby') }}</div>
+      <div class="mb-3 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500"><Icon name="map-pin" :size="14" />{{ t('orders.nearby') }}</div>
       <table class="table-dense w-full">
         <thead><tr><th>{{ t('common.plate') }}</th><th>{{ t('common.driver') }}</th><th>{{ t('orders.distance') }}</th><th>{{ t('common.status') }}</th><th /></tr></thead>
         <tbody>
           <tr v-if="nearby.length === 0"><td colspan="5" class="text-center text-xs text-slate-400">{{ t('common.noData') }}</td></tr>
-          <tr v-for="item in nearby" :key="item.vehicleId"><td>{{ item.plateNumber }}</td><td>{{ item.driverName }}</td><td>{{ item.distanceKm }}</td><td><StatusBadge :value="item.status" kind="live" /></td><td class="text-right"><button class="btn-primary btn-xs" @click="assign(item.vehicleId)">{{ t('orders.assign') }}</button></td></tr>
+          <tr v-for="item in nearby" :key="item.vehicleId"><td>{{ item.plateNumber }}</td><td>{{ item.driverName }}</td><td>{{ item.distanceKm }}</td><td><StatusBadge :value="item.status" kind="live" /></td><td class="text-right"><button class="btn-primary btn-xs" @click="assign(item.vehicleId)"><Icon name="check" :size="13" />{{ t('orders.assign') }}</button></td></tr>
         </tbody>
       </table>
       <div class="mt-4 flex items-end gap-2">
@@ -74,15 +74,15 @@
                 <span class="w-5 text-center font-semibold">{{ checkpoint.sequence }}</span>
                 <input v-model="checkpoint.name" class="input !py-0.5" />
                 <input v-model.number="checkpoint.radiusM" type="number" class="input w-20 !py-0.5" />
-                <span v-if="checkpoint.reachedAt" class="text-green-700">✓ {{ formatDateTime(checkpoint.reachedAt) }}</span>
+                <span v-if="checkpoint.reachedAt" class="inline-flex items-center gap-1 text-green-700"><Icon name="check" :size="13" />{{ formatDateTime(checkpoint.reachedAt) }}</span>
                 <button v-else-if="checkpoint.id && selected.status === 'IN_PROGRESS'" class="btn-secondary btn-xs" @click="reach(checkpoint.id)">{{ t('orders.reach') }}</button>
-                <button class="text-red-600" @click="routeDraft.checkpoints.splice(routeDraft.checkpoints.indexOf(checkpoint), 1)">✕</button>
+                <button class="btn-ghost btn-icon btn-sm text-red-600" @click="routeDraft.checkpoints.splice(routeDraft.checkpoints.indexOf(checkpoint), 1)"><Icon name="x" :size="13" /></button>
               </li>
             </ul>
           </div>
           <div class="pt-2"><label class="label">{{ t('orders.deviation') }}</label><input v-model.number="routeDraft.deviationThresholdKm" type="number" step="0.1" min="0.05" class="input w-32" /></div>
           <div class="pt-2 text-[11px] text-slate-500">{{ t('orders.distanceKm') }}: {{ draftDistance }} · {{ routeDraft.polyline.length }} pts</div>
-          <button class="btn-primary mt-2" :disabled="routeDraft.polyline.length < 2 || ['COMPLETED', 'CANCELLED'].includes(selected.status)" @click="saveRoute">{{ t('common.save') }} {{ t('orders.route') }}</button>
+          <button class="btn-primary mt-2" :disabled="routeDraft.polyline.length < 2 || ['COMPLETED', 'CANCELLED'].includes(selected.status)" @click="saveRoute"><Icon name="route" :size="16" />{{ t('common.save') }} {{ t('orders.route') }}</button>
         </div>
         <div class="h-[460px] lg:col-span-2">
           <ClientOnly>

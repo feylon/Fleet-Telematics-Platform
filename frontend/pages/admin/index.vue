@@ -1,52 +1,54 @@
 <template>
   <div class="space-y-4">
     <PageHeader :title="t('admin.system')" :subtitle="snapshot?.timestamp ? formatDateTime(snapshot.timestamp) : ''">
-      <button class="btn-secondary btn-xs" @click="load">{{ t('common.refresh') }}</button>
+      <span class="inline-flex items-center gap-2 text-xs text-slate-500"><span class="live-dot bg-emerald-500" />{{ t('admin.autoRefresh') }}</span>
+      <button class="btn-secondary" @click="load"><Icon name="refresh" :size="16" />{{ t('common.refresh') }}</button>
     </PageHeader>
-    <div v-if="snapshot" class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-      <KpiCard :label="t('admin.kafka')" :value="t(`status.${snapshot.kafka.status}`)" :hint="`${snapshot.kafka.topics.length} ${t('admin.topic')}`" />
-      <KpiCard :label="t('admin.clickhouse')" :value="t(`status.${snapshot.clickhouse.status}`)" :hint="`${t('admin.rowsLastMinute')}: ${snapshot.clickhouse.rows_last_minute ?? 0}`" />
-      <KpiCard :label="t('admin.redis')" :value="t(`status.${snapshot.redis.status}`)" :hint="`${t('admin.memory')}: ${snapshot.redis.usedMemory ?? '-'} · ${t('admin.clients')}: ${snapshot.redis.connectedClients ?? '-'}`" />
-      <KpiCard :label="t('admin.postgres')" :value="t(`status.${snapshot.postgres.status}`)" :hint="`${t('admin.connections')}: ${snapshot.postgres.connections ?? 0} · ${t('admin.dbSize')}: ${((snapshot.postgres.sizeBytes ?? 0) / 1048576).toFixed(1)} MB`" />
+    <div v-if="snapshot" class="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+      <DependencyCard icon="activity" :title="t('admin.kafka')" :status="snapshot.kafka.status" :rows="[[t('admin.topic'), snapshot.kafka.topics.length], [t('admin.group'), snapshot.kafka.groups.length]]" />
+      <DependencyCard icon="database" :title="t('admin.clickhouse')" :status="snapshot.clickhouse.status" :rows="[[t('admin.rowsLastMinute'), snapshot.clickhouse.rows_last_minute ?? 0], [t('admin.totalRows'), snapshot.clickhouse.total_rows ?? 0]]" />
+      <DependencyCard icon="zap" :title="t('admin.redis')" :status="snapshot.redis.status" :rows="[[t('admin.memory'), snapshot.redis.usedMemory ?? '-'], [t('admin.clients'), snapshot.redis.connectedClients ?? '-']]" />
+      <DependencyCard icon="server" :title="t('admin.postgres')" :status="snapshot.postgres.status" :rows="[[t('admin.connections'), snapshot.postgres.connections ?? 0], [t('admin.dbSize'), `${((snapshot.postgres.sizeBytes ?? 0) / 1048576).toFixed(1)} MB`]]" />
+      <DependencyCard icon="wifi" :title="t('admin.websocket')" status="up" :rows="[[t('admin.clients'), snapshot.websocket.connectedClients]]" />
     </div>
-    <div v-if="snapshot" class="grid gap-4 lg:grid-cols-2">
-      <div class="card">
-        <div class="border-b border-slate-200 px-3 py-2 text-sm font-semibold">{{ t('admin.kafka') }} · {{ t('admin.topic') }}</div>
+    <div v-if="snapshot" class="grid gap-4 lg:grid-cols-5">
+      <div class="card overflow-hidden lg:col-span-3">
+        <div class="card-header"><Icon name="activity" :size="17" class="text-[var(--color-primary)]" /><span class="card-title">{{ t('admin.kafka') }} · {{ t('admin.topic') }}</span></div>
         <table class="table-dense w-full">
-          <thead><tr><th>{{ t('admin.topic') }}</th><th>{{ t('admin.partitions') }}</th><th>{{ t('admin.endOffset') }}</th></tr></thead>
-          <tbody><tr v-for="topic in snapshot.kafka.topics" :key="topic.topic"><td>{{ topic.topic }}</td><td>{{ topic.partitions }}</td><td>{{ topic.endOffset }}</td></tr></tbody>
+          <thead><tr><th>{{ t('admin.topic') }}</th><th class="text-right">{{ t('admin.partitions') }}</th><th class="text-right">{{ t('admin.endOffset') }}</th></tr></thead>
+          <tbody><tr v-for="topic in snapshot.kafka.topics" :key="topic.topic"><td class="font-medium">{{ topic.topic }}</td><td class="tabular text-right">{{ topic.partitions }}</td><td class="tabular text-right">{{ topic.endOffset }}</td></tr></tbody>
         </table>
-        <div class="border-y border-slate-200 px-3 py-2 text-sm font-semibold">{{ t('admin.group') }} · {{ t('admin.lag') }}</div>
+        <div class="card-header border-t"><Icon name="layers" :size="17" class="text-[var(--color-primary)]" /><span class="card-title">{{ t('admin.group') }} · {{ t('admin.lag') }}</span></div>
         <table class="table-dense w-full">
-          <thead><tr><th>{{ t('admin.group') }}</th><th>{{ t('admin.topic') }}</th><th>{{ t('admin.lag') }}</th></tr></thead>
+          <thead><tr><th>{{ t('admin.group') }}</th><th>{{ t('admin.topic') }}</th><th class="text-right">{{ t('admin.lag') }}</th></tr></thead>
           <tbody>
-            <tr v-if="snapshot.kafka.groups.length === 0"><td colspan="3" class="text-center text-slate-400">{{ t('common.noData') }}</td></tr>
-            <tr v-for="group in snapshot.kafka.groups" :key="`${group.groupId}-${group.topic}`"><td>{{ group.groupId }}</td><td>{{ group.topic }}</td><td :class="group.lag > 1000 ? 'text-red-600 font-semibold' : ''">{{ group.lag }}</td></tr>
+            <tr v-if="snapshot.kafka.groups.length === 0"><td colspan="3" class="py-6 text-center text-slate-400">{{ t('common.noData') }}</td></tr>
+            <tr v-for="group in snapshot.kafka.groups" :key="`${group.groupId}-${group.topic}`"><td class="font-medium">{{ group.groupId }}</td><td>{{ group.topic }}</td><td class="tabular text-right"><span class="badge" :class="group.lag > 1000 ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'">{{ group.lag }}</span></td></tr>
           </tbody>
         </table>
       </div>
-      <div class="space-y-4">
-        <div class="card card-body text-sm">
-          <div class="mb-2 font-semibold">{{ t('admin.clickhouse') }}</div>
-          <dl class="grid grid-cols-2 gap-y-1 text-xs">
-            <dt class="text-slate-500">{{ t('admin.rowsLastMinute') }}</dt><dd>{{ snapshot.clickhouse.rows_last_minute ?? 0 }}</dd>
-            <dt class="text-slate-500">{{ t('admin.rowsLastHour') }}</dt><dd>{{ snapshot.clickhouse.rows_last_hour ?? 0 }}</dd>
-            <dt class="text-slate-500">{{ t('admin.alertsLastHour') }}</dt><dd>{{ snapshot.clickhouse.alerts_last_hour ?? 0 }}</dd>
-            <dt class="text-slate-500">{{ t('admin.totalRows') }}</dt><dd>{{ snapshot.clickhouse.total_rows ?? 0 }}</dd>
-            <dt class="text-slate-500">{{ t('admin.latest') }}</dt><dd>{{ snapshot.clickhouse.latest ?? '-' }}</dd>
+      <div class="space-y-4 lg:col-span-2">
+        <div class="card card-body">
+          <div class="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500"><Icon name="database" :size="14" />{{ t('admin.clickhouse') }}</div>
+          <dl class="grid grid-cols-[1fr_auto] gap-y-1.5 text-[13px]">
+            <dt class="text-slate-500">{{ t('admin.rowsLastMinute') }}</dt><dd class="tabular font-semibold">{{ snapshot.clickhouse.rows_last_minute ?? 0 }}</dd>
+            <dt class="text-slate-500">{{ t('admin.rowsLastHour') }}</dt><dd class="tabular font-semibold">{{ snapshot.clickhouse.rows_last_hour ?? 0 }}</dd>
+            <dt class="text-slate-500">{{ t('admin.alertsLastHour') }}</dt><dd class="tabular font-semibold">{{ snapshot.clickhouse.alerts_last_hour ?? 0 }}</dd>
+            <dt class="text-slate-500">{{ t('admin.totalRows') }}</dt><dd class="tabular font-semibold">{{ snapshot.clickhouse.total_rows ?? 0 }}</dd>
+            <dt class="text-slate-500">{{ t('admin.latest') }}</dt><dd class="tabular font-semibold">{{ snapshot.clickhouse.latest ?? '-' }}</dd>
           </dl>
         </div>
-        <div class="card card-body text-sm">
-          <div class="mb-2 font-semibold">{{ t('admin.redis') }} / {{ t('admin.websocket') }}</div>
-          <dl class="grid grid-cols-2 gap-y-1 text-xs">
-            <dt class="text-slate-500">{{ t('admin.ops') }}</dt><dd>{{ snapshot.redis.opsPerSec ?? '-' }}</dd>
-            <dt class="text-slate-500">{{ t('admin.memory') }}</dt><dd>{{ snapshot.redis.usedMemory ?? '-' }}</dd>
-            <dt class="text-slate-500">{{ t('admin.websocket') }}</dt><dd>{{ snapshot.websocket.connectedClients }}</dd>
+        <div class="card card-body">
+          <div class="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500"><Icon name="zap" :size="14" />{{ t('admin.redis') }}</div>
+          <dl class="grid grid-cols-[1fr_auto] gap-y-1.5 text-[13px]">
+            <dt class="text-slate-500">{{ t('admin.ops') }}</dt><dd class="tabular font-semibold">{{ snapshot.redis.opsPerSec ?? '-' }}</dd>
+            <dt class="text-slate-500">{{ t('admin.memory') }}</dt><dd class="tabular font-semibold">{{ snapshot.redis.usedMemory ?? '-' }}</dd>
+            <dt class="text-slate-500">{{ t('admin.clients') }}</dt><dd class="tabular font-semibold">{{ snapshot.redis.connectedClients ?? '-' }}</dd>
           </dl>
         </div>
       </div>
     </div>
-    <div v-else class="text-sm text-slate-400">{{ t('common.loading') }}</div>
+    <div v-else class="grid gap-3 md:grid-cols-5"><div v-for="i in 5" :key="i" class="skeleton h-28" /></div>
   </div>
 </template>
 

@@ -1,32 +1,32 @@
 <template>
   <div class="grid gap-4 lg:grid-cols-2">
     <div class="card">
-      <div class="flex items-center gap-2 border-b border-slate-200 px-3 py-2">
-        <span class="text-sm font-semibold">{{ t('auth.sessions') }}</span>
-        <button class="btn-danger btn-xs ml-auto" @click="terminateOthers">{{ t('auth.terminateOthers') }}</button>
+      <div class="card-header">
+        <Icon name="shield" :size="17" class="text-[var(--color-primary)]" /><span class="card-title">{{ t('auth.sessions') }}</span>
+        <button class="btn-danger btn-xs ml-auto" @click="terminateOthers"><Icon name="power" :size="13" />{{ t('auth.terminateOthers') }}</button>
       </div>
       <table class="table-dense w-full">
         <thead><tr><th>{{ t('auth.client') }}</th><th>{{ t('auth.ip') }}</th><th>{{ t('auth.userAgent') }}</th><th>{{ t('auth.lastUsedAt') }}</th><th /></tr></thead>
         <tbody>
           <tr v-for="session in sessions" :key="session.id">
-            <td>{{ session.client }} <span v-if="session.current" class="ml-1 rounded bg-green-100 px-1 text-[10px] text-green-700">{{ t('auth.current') }}</span></td>
+            <td>{{ session.client }} <span v-if="session.current" class="badge ml-1 bg-emerald-100 text-emerald-700">{{ t('auth.current') }}</span></td>
             <td>{{ session.ip }}</td>
             <td class="max-w-[220px] truncate" :title="session.userAgent">{{ session.userAgent }}</td>
             <td>{{ formatDateTime(session.lastUsedAt) }}</td>
-            <td class="text-right"><button v-if="!session.current" class="btn-secondary btn-xs" @click="terminate(session.id)">{{ t('auth.terminate') }}</button></td>
+            <td class="text-right"><button v-if="!session.current" class="btn-secondary btn-xs" @click="terminate(session.id)"><Icon name="x" :size="13" />{{ t('auth.terminate') }}</button></td>
           </tr>
         </tbody>
       </table>
     </div>
     <div class="card">
-      <div class="border-b border-slate-200 px-3 py-2 text-sm font-semibold">{{ t('auth.loginHistory') }}</div>
+      <div class="card-header"><Icon name="history" :size="17" class="text-[var(--color-primary)]" /><span class="card-title">{{ t('auth.loginHistory') }}</span></div>
       <table class="table-dense w-full">
         <thead><tr><th>{{ t('common.time') }}</th><th>{{ t('auth.ip') }}</th><th>{{ t('auth.result') }}</th><th>{{ t('auth.reason') }}</th></tr></thead>
         <tbody>
           <tr v-for="row in history" :key="row.id">
             <td>{{ formatDateTime(row.createdAt) }}</td>
             <td>{{ row.ip }}</td>
-            <td><span :class="row.success ? 'text-green-700' : 'text-red-700'">{{ row.success ? t('auth.succeeded') : t('auth.failed') }}</span></td>
+            <td><span class="badge" :class="row.success ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'"><Icon :name="row.success ? 'check' : 'x'" :size="11" />{{ row.success ? t('auth.succeeded') : t('auth.failed') }}</span></td>
             <td>{{ row.reason || '' }}</td>
           </tr>
         </tbody>

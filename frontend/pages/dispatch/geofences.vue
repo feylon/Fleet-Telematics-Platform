@@ -1,9 +1,9 @@
 <template>
-  <div class="flex h-[calc(100vh-6rem)] gap-3">
-    <aside class="card flex w-80 flex-none flex-col">
-      <div class="flex items-center gap-2 border-b border-slate-200 px-3 py-2">
-        <span class="text-sm font-semibold">{{ t('geofence.title') }}</span>
-        <button class="btn-primary btn-xs ml-auto" @click="startNew">{{ t('geofence.new') }}</button>
+  <div class="flex h-[calc(100vh-7.5rem)] gap-4">
+    <aside class="card flex w-[320px] flex-none flex-col overflow-hidden">
+      <div class="card-header">
+        <Icon name="hexagon" :size="17" class="text-[var(--color-primary)]" /><span class="card-title">{{ t('geofence.title') }}</span>
+        <button class="btn-primary btn-xs ml-auto" @click="startNew"><Icon name="plus" :size="14" />{{ t('geofence.new') }}</button>
       </div>
       <div class="min-h-0 flex-1 overflow-y-auto">
         <button v-for="item in geofences" :key="item.id" class="flex w-full items-center gap-2 border-b border-slate-100 px-3 py-2 text-left hover:bg-slate-50" :class="form.id === item.id ? 'bg-primary-soft' : ''" @click="edit(item)">
@@ -14,7 +14,7 @@
           </div>
         </button>
       </div>
-      <form class="space-y-2 border-t border-slate-200 p-3" @submit.prevent="save">
+      <form class="space-y-2 border-t border-slate-100 bg-slate-50/60 p-3" @submit.prevent="save">
         <div class="text-xs font-semibold text-slate-500">{{ form.id ? t('geofence.editing') : t('geofence.new') }} · {{ t('geofence.vertices') }}: {{ vertices.length }}</div>
         <div><label class="label">{{ t('common.name') }}</label><input v-model="form.name" class="input" required /></div>
         <div class="grid grid-cols-2 gap-2">
@@ -30,7 +30,7 @@
         </div>
         <div><label class="label">{{ t('common.description') }}</label><input v-model="form.description" class="input" /></div>
         <div class="flex gap-2">
-          <button class="btn-primary flex-1 justify-center" :disabled="vertices.length < 3">{{ t('common.save') }}</button>
+          <button class="btn-primary flex-1 justify-center" :disabled="vertices.length < 3"><Icon name="check" :size="16" />{{ t('common.save') }}</button>
           <ConfirmButton v-if="form.id" klass="btn-danger" @confirm="remove">{{ t('common.delete') }}</ConfirmButton>
         </div>
       </form>

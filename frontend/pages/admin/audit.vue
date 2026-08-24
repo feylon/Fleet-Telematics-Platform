@@ -9,15 +9,15 @@
       <div><label class="label">{{ t('admin.resource') }}</label><input v-model="filters.resource" class="input" placeholder="admin.users" /></div>
       <div><label class="label">{{ t('common.from') }}</label><input v-model="filters.from" type="datetime-local" class="input" /></div>
       <div><label class="label">{{ t('common.to') }}</label><input v-model="filters.to" type="datetime-local" class="input" /></div>
-      <div class="flex items-end gap-2"><button class="btn-primary" @click="load(1)">{{ t('common.apply') }}</button></div>
+      <div class="flex items-end gap-2"><button class="btn-primary" @click="load(1)"><Icon name="search" :size="16" />{{ t('common.apply') }}</button></div>
     </div>
     <DataTable :columns="columns" :rows="rows" :loading="loading" row-key="id" :filterable="false" :export-title="t('admin.audit')" :initial-page-size="50">
       <template #cell-payload="{ value }"><code class="block max-w-[320px] truncate text-[11px]" :title="JSON.stringify(value)">{{ value ? JSON.stringify(value) : '' }}</code></template>
     </DataTable>
     <div class="flex items-center justify-end gap-2 text-xs">
-      <button class="btn-secondary btn-xs" :disabled="page <= 1" @click="load(page - 1)">‹</button>
+      <button class="btn-secondary btn-icon btn-xs" :disabled="page <= 1" @click="load(page - 1)"><Icon name="chevron-left" :size="14" /></button>
       <span>{{ t('common.page') }} {{ page }} · {{ t('common.total') }}: {{ total }}</span>
-      <button class="btn-secondary btn-xs" :disabled="page * 100 >= total" @click="load(page + 1)">›</button>
+      <button class="btn-secondary btn-icon btn-xs" :disabled="page * 100 >= total" @click="load(page + 1)"><Icon name="chevron-right" :size="14" /></button>
     </div>
   </div>
 </template>

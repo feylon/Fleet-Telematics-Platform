@@ -24,5 +24,6 @@ export const TASHKENT: [number, number] = [41.3111, 69.2797];
 export const tileLayerOptions = {
   url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
   attribution: '© OpenStreetMap contributors',
+  subdomains: 'abc',
   maxZoom: 19,
 };

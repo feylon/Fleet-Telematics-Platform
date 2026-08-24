@@ -1,23 +1,23 @@
 <template>
   <div class="space-y-3">
     <PageHeader :title="t('admin.users')">
-      <input v-model="lookupId" class="input w-72" :placeholder="t('admin.lookupHint')" />
-      <button class="btn-secondary" @click="lookup">{{ t('common.lookup') }}</button>
+      <div class="relative"><Icon name="key" :size="15" class="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" /><input v-model="lookupId" class="input w-80 !pl-8" :placeholder="t('admin.lookupHint')" /></div>
+      <button class="btn-secondary" @click="lookup"><Icon name="search" :size="16" />{{ t('common.lookup') }}</button>
       <select v-model="organizationFilter" class="input w-56" @change="load">
         <option value="">{{ t('common.allOrganizations') }}</option>
         <option v-for="org in tenant.options" :key="org.id" :value="org.id">{{ org.name }}</option>
       </select>
-      <button class="btn-primary" @click="openCreate">{{ t('admin.newUser') }}</button>
+      <button class="btn-primary" @click="openCreate"><Icon name="plus" :size="16" />{{ t('admin.newUser') }}</button>
     </PageHeader>
     <DataTable :columns="columns" :rows="rows" :loading="loading" row-key="id" :export-title="t('admin.users')">
       <template #cell-role="{ value }">{{ t(`admin.${value}`) }}</template>
       <template #cell-isActive="{ value }"><span :class="value ? 'text-green-700' : 'text-slate-400'">{{ value ? t('common.active') : t('common.inactive') }}</span></template>
       <template #actions="{ row }">
-        <button class="btn-secondary btn-xs" @click="openEdit(row)">{{ t('common.edit') }}</button>
-        <button class="btn-secondary btn-xs ml-1" @click="openCredentials(row)">{{ t('admin.credentials') }}</button>
-        <button class="btn-secondary btn-xs ml-1" @click="openHistory(row)">{{ t('auth.loginHistory') }}</button>
-        <ConfirmButton klass="btn-secondary btn-xs ml-1" :message="t('admin.terminateSessions') + '?'" @confirm="terminate(row.id)">{{ t('auth.terminate') }}</ConfirmButton>
-        <ConfirmButton klass="btn-danger btn-xs ml-1" @confirm="remove(row.id)">{{ t('common.delete') }}</ConfirmButton>
+        <button class="btn-secondary btn-xs" @click="openEdit(row)"><Icon name="pencil" :size="13" />{{ t('common.edit') }}</button>
+        <button class="btn-secondary btn-xs" @click="openCredentials(row)"><Icon name="key" :size="13" />{{ t('admin.credentials') }}</button>
+        <button class="btn-secondary btn-xs" @click="openHistory(row)"><Icon name="history" :size="13" />{{ t('auth.loginHistory') }}</button>
+        <ConfirmButton klass="btn-secondary btn-xs" :message="t('admin.terminateSessions') + '?'" @confirm="terminate(row.id)"><Icon name="power" :size="13" />{{ t('auth.terminate') }}</ConfirmButton>
+        <ConfirmButton klass="btn-danger btn-xs" @confirm="remove(row.id)"><Icon name="trash" :size="13" />{{ t('common.delete') }}</ConfirmButton>
       </template>
     </DataTable>
 
@@ -36,16 +36,16 @@
         <div><label class="label">{{ t('common.email') }}</label><input v-model="form.email" type="email" class="input" /></div>
         <div><label class="label">{{ t('common.language') }}</label><select v-model="form.locale" class="input"><option value="uz">O'zbekcha</option><option value="ru">Русский</option></select></div>
         <div v-if="editing" class="flex items-end"><label class="flex items-center gap-2 text-sm"><input v-model="form.isActive" type="checkbox" />{{ t('common.active') }}</label></div>
-        <div class="flex justify-end gap-2 md:col-span-2"><button type="button" class="btn-secondary" @click="modal = null">{{ t('common.cancel') }}</button><button class="btn-primary">{{ t('common.save') }}</button></div>
+        <div class="flex justify-end gap-2 md:col-span-2"><button type="button" class="btn-secondary" @click="modal = null">{{ t('common.cancel') }}</button><button class="btn-primary"><Icon name="check" :size="16" />{{ t('common.save') }}</button></div>
       </form>
     </Modal>
 
     <Modal :open="modal === 'credentials'" :title="t('admin.setCredentials')" @close="modal = null">
       <form class="space-y-3" @submit.prevent="saveCredentials">
-        <p class="text-xs text-slate-500">{{ editing?.login }} · {{ editing?.fullName }} · <code>{{ editing?.id }}</code></p>
+        <p class="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">{{ editing?.login }} · {{ editing?.fullName }} · <code class="text-[11px]">{{ editing?.id }}</code></p>
         <div><label class="label">{{ t('admin.newLogin') }}</label><input v-model="credentials.login" class="input" pattern="[a-zA-Z0-9._-]{4,80}" /></div>
         <div><label class="label">{{ t('admin.newPassword') }}</label><input v-model="credentials.password" type="password" class="input" minlength="8" /></div>
-        <div class="flex justify-end gap-2"><button type="button" class="btn-secondary" @click="modal = null">{{ t('common.cancel') }}</button><button class="btn-primary">{{ t('common.save') }}</button></div>
+        <div class="flex justify-end gap-2"><button type="button" class="btn-secondary" @click="modal = null">{{ t('common.cancel') }}</button><button class="btn-primary"><Icon name="check" :size="16" />{{ t('common.save') }}</button></div>
       </form>
     </Modal>
 

@@ -2,7 +2,7 @@
   <div class="space-y-4">
     <PageHeader :title="t('nav.profile')" />
     <div class="grid gap-4 lg:grid-cols-2">
-      <div class="card card-body space-y-2 text-sm">
+      <div class="card card-body space-y-2 text-sm"><div class="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500"><Icon name="user" :size="14" />{{ t('nav.profile') }}</div>
         <div><span class="label">{{ t('common.fullName') }}</span>{{ auth.user?.fullName }}</div>
         <div><span class="label">{{ t('common.login') }}</span>{{ auth.user?.login }}</div>
         <div><span class="label">{{ t('common.role') }}</span>{{ t(`admin.${auth.user?.role}`) }}</div>

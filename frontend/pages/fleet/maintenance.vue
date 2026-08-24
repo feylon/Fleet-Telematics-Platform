@@ -1,10 +1,10 @@
 <template>
   <div class="space-y-3">
     <PageHeader :title="t('maintenance.title')">
-      <button class="btn-primary" @click="openCreate">{{ t('maintenance.new') }}</button>
+      <button class="btn-primary" @click="openCreate"><Icon name="plus" :size="16" />{{ t('maintenance.new') }}</button>
     </PageHeader>
-    <div class="card">
-      <div class="border-b border-slate-200 px-3 py-2 text-sm font-semibold">{{ t('maintenance.due') }}</div>
+    <div class="card overflow-hidden">
+      <div class="card-header"><Icon name="alert-triangle" :size="17" class="text-amber-500" /><span class="card-title">{{ t('maintenance.due') }}</span></div>
       <table class="table-dense w-full">
         <thead><tr><th>{{ t('common.plate') }}</th><th>{{ t('maintenance.reason') }}</th><th>{{ t('maintenance.dueAt') }}</th><th>{{ t('maintenance.dueKm') }}</th><th>{{ t('vehicles.odometer') }}</th></tr></thead>
         <tbody>
@@ -15,7 +15,7 @@
     </div>
     <DataTable :columns="columns" :rows="rows" :loading="loading" row-key="id" :export-title="t('maintenance.history')">
       <template #cell-type="{ value }">{{ t(`maintenance.${value}`) }}</template>
-      <template #actions="{ row }"><ConfirmButton klass="btn-danger btn-xs" @confirm="remove(row.id)">{{ t('common.delete') }}</ConfirmButton></template>
+      <template #actions="{ row }"><ConfirmButton klass="btn-danger btn-xs" @confirm="remove(row.id)"><Icon name="trash" :size="13" />{{ t('common.delete') }}</ConfirmButton></template>
     </DataTable>
     <Modal :open="modal" :title="t('maintenance.new')" wide @close="modal = false">
       <form class="grid gap-3 md:grid-cols-3" @submit.prevent="save">
@@ -30,7 +30,7 @@
         <div><label class="label">{{ t('maintenance.downtimeFrom') }}</label><input v-model="form.downtimeFrom" type="datetime-local" class="input" /></div>
         <div><label class="label">{{ t('maintenance.downtimeTo') }}</label><input v-model="form.downtimeTo" type="datetime-local" class="input" /></div>
         <div class="flex items-end md:col-span-3"><label class="flex items-center gap-2 text-sm"><input v-model="form.markOutOfService" type="checkbox" />{{ t('maintenance.markOut') }}</label></div>
-        <div class="flex justify-end gap-2 md:col-span-3"><button type="button" class="btn-secondary" @click="modal = false">{{ t('common.cancel') }}</button><button class="btn-primary">{{ t('common.save') }}</button></div>
+        <div class="flex justify-end gap-2 md:col-span-3"><button type="button" class="btn-secondary" @click="modal = false">{{ t('common.cancel') }}</button><button class="btn-primary"><Icon name="check" :size="16" />{{ t('common.save') }}</button></div>
       </form>
     </Modal>
   </div>

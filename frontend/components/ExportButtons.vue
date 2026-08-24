@@ -1,7 +1,8 @@
 <template>
-  <div class="flex gap-1">
-    <button class="btn-secondary btn-xs" :disabled="busy || rows.length === 0" @click="run('pdf')">📄 {{ t('common.exportPdf') }}</button>
-    <button class="btn-secondary btn-xs" :disabled="busy || rows.length === 0" @click="run('xlsx')">📊 {{ t('common.exportExcel') }}</button>
+  <div class="inline-flex items-center rounded-lg border border-slate-200 bg-white shadow-card">
+    <button class="btn-ghost btn-sm gap-1.5 rounded-r-none" :disabled="busy || rows.length === 0" :title="t('common.exportPdf')" @click="run('pdf')"><Icon name="file-text" :size="15" />{{ t('common.exportPdf') }}</button>
+    <span class="h-5 w-px bg-slate-200" />
+    <button class="btn-ghost btn-sm gap-1.5 rounded-l-none" :disabled="busy || rows.length === 0" :title="t('common.exportExcel')" @click="run('xlsx')"><Icon name="table" :size="15" />{{ t('common.exportExcel') }}</button>
   </div>
 </template>
 

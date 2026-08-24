@@ -1,10 +1,3 @@
-const proxyTarget = process.env.NUXT_API_PROXY_TARGET || 'http://localhost:3001';
-
-const proxyRules = {
-  '/api/**': { proxy: { to: `${proxyTarget}/api/**` } },
-  '/docs/**': { proxy: { to: `${proxyTarget}/docs/**` } },
-};
-
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-01',
   ssr: true,
@@ -14,10 +7,16 @@ export default defineNuxtConfig({
   app: {
     head: {
       meta: [{ name: 'viewport', content: 'width=device-width, initial-scale=1' }],
-      link: [{ rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }],
+      link: [
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+        { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+        { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
+        { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap' },
+      ],
     },
   },
   runtimeConfig: {
+    apiProxyTarget: 'http://localhost:3001',
     public: {
       apiBase: '',
       wsUrl: 'http://localhost:3001',
@@ -47,9 +46,6 @@ export default defineNuxtConfig({
     optimizeDeps: {
       include: ['leaflet', 'leaflet.markercluster', 'socket.io-client', 'dayjs'],
     },
-  },
-  nitro: {
-    routeRules: proxyRules as never,
   },
   typescript: {
     strict: true,

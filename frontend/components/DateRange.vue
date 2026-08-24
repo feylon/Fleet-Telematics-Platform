@@ -2,13 +2,13 @@
   <div class="flex flex-wrap items-end gap-2">
     <div>
       <label class="label">{{ t('common.from') }}</label>
-      <input type="datetime-local" class="input" :value="modelValue.from" @input="update('from', $event)" />
+      <input type="datetime-local" class="input w-[190px]" :value="modelValue.from" @input="update('from', $event)" />
     </div>
     <div>
       <label class="label">{{ t('common.to') }}</label>
-      <input type="datetime-local" class="input" :value="modelValue.to" @input="update('to', $event)" />
+      <input type="datetime-local" class="input w-[190px]" :value="modelValue.to" @input="update('to', $event)" />
     </div>
-    <button class="btn-primary" @click="emit('apply')">{{ t('common.apply') }}</button>
+    <button class="btn-primary" @click="emit('apply')"><Icon name="refresh" :size="16" />{{ t('common.apply') }}</button>
   </div>
 </template>
 

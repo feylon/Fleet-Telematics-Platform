@@ -1,5 +1,5 @@
 <template>
-  <div ref="container" class="h-full w-full rounded-lg" />
+  <div ref="container" class="h-full w-full rounded-xl" />
 </template>
 
 <script setup lang="ts">
@@ -49,7 +49,7 @@ onMounted(async () => {
   L = await loadLeaflet();
   if (!container.value) return;
   map = L.map(container.value).setView(TASHKENT, 11);
-  L.tileLayer(tileLayerOptions.url, { attribution: tileLayerOptions.attribution, maxZoom: tileLayerOptions.maxZoom }).addTo(map);
+  L.tileLayer(tileLayerOptions.url, { attribution: tileLayerOptions.attribution, maxZoom: tileLayerOptions.maxZoom, subdomains: tileLayerOptions.subdomains }).addTo(map);
   drawTrack();
   setTimeout(() => map?.invalidateSize(), 200);
 });

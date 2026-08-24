@@ -127,9 +127,9 @@ const step = (mover, tick, index) => {
     mover.speed = 0;
   } else {
     const roll = Math.random();
-    if (roll < 0.015) mover.stoppedTicks = 5 + Math.floor(Math.random() * 20);
-    else if (roll < 0.022) mover.speed = Math.max(0, mover.speed - 35);
-    else if (roll < 0.04) mover.speed = 95 + Math.random() * 20;
+    if (roll < 0.012) mover.stoppedTicks = 5 + Math.floor(Math.random() * 20);
+    else if (roll < 0.0145) mover.speed = Math.max(0, mover.speed - 35);
+    else if (roll < 0.02) mover.speed = 95 + Math.random() * 20;
     else mover.speed = Math.max(0, Math.min(85, mover.speed + (Math.random() - 0.5) * 12));
   }
   const from = mover.route[mover.segment];

@@ -1,13 +1,13 @@
 <template>
   <div class="space-y-3">
     <PageHeader :title="t('admin.organizations')">
-      <button class="btn-primary" @click="openCreate">{{ t('admin.newOrganization') }}</button>
+      <button class="btn-primary" @click="openCreate"><Icon name="plus" :size="16" />{{ t('admin.newOrganization') }}</button>
     </PageHeader>
     <DataTable :columns="columns" :rows="rows" :loading="loading" row-key="id" :export-title="t('admin.organizations')">
       <template #cell-isActive="{ value }"><span :class="value ? 'text-green-700' : 'text-slate-400'">{{ value ? t('common.active') : t('common.inactive') }}</span></template>
       <template #actions="{ row }">
-        <button class="btn-secondary btn-xs" @click="openEdit(row)">{{ t('common.edit') }}</button>
-        <ConfirmButton klass="btn-danger btn-xs ml-1" @confirm="remove(row.id)">{{ t('common.delete') }}</ConfirmButton>
+        <button class="btn-secondary btn-xs" @click="openEdit(row)"><Icon name="pencil" :size="13" />{{ t('common.edit') }}</button>
+        <ConfirmButton klass="btn-danger btn-xs" @confirm="remove(row.id)"><Icon name="trash" :size="13" />{{ t('common.delete') }}</ConfirmButton>
       </template>
     </DataTable>
     <Modal :open="modal" :title="editing ? t('common.edit') : t('admin.newOrganization')" @close="modal = false">
@@ -19,7 +19,7 @@
         <div class="md:col-span-2"><label class="label">{{ t('admin.address') }}</label><input v-model="form.address" class="input" /></div>
         <div><label class="label">{{ t('admin.defaultLocale') }}</label><select v-model="form.defaultLocale" class="input"><option value="uz">O'zbekcha</option><option value="ru">Русский</option></select></div>
         <div v-if="editing" class="flex items-end"><label class="flex items-center gap-2 text-sm"><input v-model="form.isActive" type="checkbox" />{{ t('common.active') }}</label></div>
-        <div class="flex justify-end gap-2 md:col-span-2"><button type="button" class="btn-secondary" @click="modal = false">{{ t('common.cancel') }}</button><button class="btn-primary">{{ t('common.save') }}</button></div>
+        <div class="flex justify-end gap-2 md:col-span-2"><button type="button" class="btn-secondary" @click="modal = false">{{ t('common.cancel') }}</button><button class="btn-primary"><Icon name="check" :size="16" />{{ t('common.save') }}</button></div>
       </form>
     </Modal>
   </div>
