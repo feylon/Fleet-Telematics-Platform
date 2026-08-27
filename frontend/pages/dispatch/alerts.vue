@@ -3,8 +3,8 @@
     <PageHeader :title="t('alerts.history')">
       <DateRange v-model="range" @apply="load" />
     </PageHeader>
-    <div class="grid gap-3 md:grid-cols-4 xl:grid-cols-8">
-      <KpiCard v-for="stat in stats" :key="stat.alertType" :label="t(`alerts.${stat.alertType}`)" :value="stat.count" />
+    <div class="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(210px,1fr))]">
+      <KpiCard v-for="stat in stats" :key="stat.alertType" :icon="iconFor(stat.alertType)" :color="colorFor(stat.alertType)" :label="t(`alerts.${stat.alertType}`)" :value="stat.count" />
     </div>
     <DataTable :columns="columns" :rows="rows" :loading="loading" :export-title="t('alerts.history')" :initial-page-size="50">
       <template #cell-alertType="{ value }"><StatusBadge :value="value" kind="severity" /></template>
@@ -31,6 +31,8 @@ const rows = ref<Record<string, any>[]>([]);
 const stats = ref<Array<{ alertType: string; count: number }>>([]);
 const loading = ref(false);
 const plates = ref<Record<string, string>>({});
+const iconFor = (type: string): string => ({ SPEEDING: 'gauge', GEOFENCE_EXIT: 'hexagon', GEOFENCE_ENTER: 'hexagon', HARSH_BRAKE: 'alert-triangle', FUEL_DROP: 'fuel', UNAUTHORIZED_STOP: 'clock', ROUTE_DEVIATION: 'route', SOS: 'zap', TIME_WINDOW_VIOLATION: 'clock' } as Record<string, string>)[type] ?? 'bell';
+const colorFor = (type: string): string => (['SOS', 'FUEL_DROP'].includes(type) ? '#ef4444' : ['SPEEDING', 'HARSH_BRAKE', 'GEOFENCE_EXIT'].includes(type) ? '#f59e0b' : 'var(--color-primary)');
 const alertTypes = ['SPEEDING', 'GEOFENCE_EXIT', 'GEOFENCE_ENTER', 'HARSH_BRAKE', 'FUEL_DROP', 'UNAUTHORIZED_STOP', 'ROUTE_DEVIATION', 'SOS', 'TIME_WINDOW_VIOLATION'];
 
 const columns = computed(() => [

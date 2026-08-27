@@ -1,20 +1,20 @@
 <template>
   <div class="space-y-3">
     <PageHeader :title="t('vehicles.title')">
-      <button v-if="canEdit" class="btn-primary" @click="openCreate">{{ t('vehicles.new') }}</button>
+      <button v-if="canEdit" class="btn-primary" @click="openCreate"><Icon name="plus" :size="16" />{{ t('vehicles.new') }}</button>
     </PageHeader>
     <DataTable :columns="columns" :rows="rows" :loading="loading" row-key="id" :export-title="t('vehicles.title')">
       <template #cell-status="{ value }"><StatusBadge :value="value" kind="vehicle" /></template>
       <template #cell-fuelType="{ value }">{{ t(`vehicles.${value}`) }}</template>
       <template #actions="{ row }">
-        <NuxtLink class="btn-secondary btn-xs" :to="{ path: '/dispatch/playback', query: { vehicleId: row.id } }">⏯</NuxtLink>
+        <NuxtLink class="btn-secondary btn-icon btn-xs" :title="t('nav.playback')" :to="{ path: '/dispatch/playback', query: { vehicleId: row.id } }"><Icon name="play" :size="13" /></NuxtLink>
         <template v-if="canEdit">
-          <button class="btn-secondary btn-xs ml-1" @click="openEdit(row)">{{ t('common.edit') }}</button>
-          <button class="btn-secondary btn-xs ml-1" @click="openFuel(row)">⛽</button>
-          <button v-if="row.status !== 'ACTIVE'" class="btn-secondary btn-xs ml-1" @click="setStatus(row, 'ACTIVE')">{{ t('vehicles.markActive') }}</button>
-          <button v-if="row.status !== 'MAINTENANCE'" class="btn-secondary btn-xs ml-1" @click="setStatus(row, 'MAINTENANCE')">{{ t('vehicles.markMaintenance') }}</button>
-          <button v-if="row.status !== 'OUT_OF_SERVICE'" class="btn-secondary btn-xs ml-1" @click="setStatus(row, 'OUT_OF_SERVICE')">{{ t('vehicles.markOut') }}</button>
-          <ConfirmButton klass="btn-danger btn-xs ml-1" @confirm="remove(row.id)">{{ t('common.delete') }}</ConfirmButton>
+          <button class="btn-secondary btn-xs" @click="openEdit(row)"><Icon name="pencil" :size="13" />{{ t('common.edit') }}</button>
+          <button class="btn-secondary btn-icon btn-xs" :title="t('vehicles.fuelNorm')" @click="openFuel(row)"><Icon name="fuel" :size="13" /></button>
+          <button v-if="row.status !== 'ACTIVE'" class="btn-secondary btn-icon btn-xs text-emerald-600" :title="t('vehicles.markActive')" @click="setStatus(row, 'ACTIVE')"><Icon name="check-circle" :size="13" /></button>
+          <button v-if="row.status !== 'MAINTENANCE'" class="btn-secondary btn-icon btn-xs text-amber-600" :title="t('vehicles.markMaintenance')" @click="setStatus(row, 'MAINTENANCE')"><Icon name="wrench" :size="13" /></button>
+          <button v-if="row.status !== 'OUT_OF_SERVICE'" class="btn-secondary btn-icon btn-xs text-slate-500" :title="t('vehicles.markOut')" @click="setStatus(row, 'OUT_OF_SERVICE')"><Icon name="power" :size="13" /></button>
+          <ConfirmButton klass="btn-danger btn-xs" @confirm="remove(row.id)"><Icon name="trash" :size="13" />{{ t('common.delete') }}</ConfirmButton>
         </template>
       </template>
     </DataTable>
@@ -36,7 +36,7 @@
         <div><label class="label">{{ t('vehicles.color') }}</label><input v-model="form.color" class="input" /></div>
         <div><label class="label">{{ t('vehicles.icon') }}</label><select v-model="form.iconType" class="input"><option v-for="icon in ['truck', 'van', 'car', 'bus', 'tractor']" :key="icon" :value="icon">{{ icon }}</option></select></div>
         <div><label class="label">{{ t('common.status') }}</label><select v-model="form.status" class="input"><option v-for="s in ['ACTIVE', 'MAINTENANCE', 'OUT_OF_SERVICE']" :key="s" :value="s">{{ t(`status.${s}`) }}</option></select></div>
-        <div class="flex justify-end gap-2 md:col-span-3"><button type="button" class="btn-secondary" @click="modal = null">{{ t('common.cancel') }}</button><button class="btn-primary">{{ t('common.save') }}</button></div>
+        <div class="flex justify-end gap-2 md:col-span-3"><button type="button" class="btn-secondary" @click="modal = null">{{ t('common.cancel') }}</button><button class="btn-primary"><Icon name="check" :size="16" />{{ t('common.save') }}</button></div>
       </form>
     </Modal>
 
@@ -46,7 +46,7 @@
         <div><label class="label">{{ t('vehicles.winter') }}</label><input v-model.number="fuel.winterCoefficient" type="number" step="0.01" min="0.5" max="2" class="input" /></div>
         <div><label class="label">{{ t('vehicles.city') }}</label><input v-model.number="fuel.cityCoefficient" type="number" step="0.01" min="0.5" max="2" class="input" /></div>
         <div><label class="label">{{ t('vehicles.fuelDrop') }}</label><input v-model.number="fuel.fuelDropAlertFraction" type="number" step="0.01" min="0.01" max="1" class="input" /></div>
-        <div class="flex justify-end gap-2 md:col-span-2"><button type="button" class="btn-secondary" @click="modal = null">{{ t('common.cancel') }}</button><button class="btn-primary">{{ t('common.save') }}</button></div>
+        <div class="flex justify-end gap-2 md:col-span-2"><button type="button" class="btn-secondary" @click="modal = null">{{ t('common.cancel') }}</button><button class="btn-primary"><Icon name="check" :size="16" />{{ t('common.save') }}</button></div>
       </form>
     </Modal>
   </div>

@@ -1,8 +1,11 @@
 <template>
-  <select class="input w-auto py-1 text-xs" :value="tenant.organizationId ?? ''" @change="onChange">
-    <option value="">{{ t('common.selectOrganization') }}</option>
-    <option v-for="option in tenant.options" :key="option.id" :value="option.id">{{ option.name }}</option>
-  </select>
+  <div class="relative hidden items-center md:flex">
+    <Icon name="building" :size="15" class="pointer-events-none absolute left-2.5 text-slate-400" />
+    <select class="input h-8 w-auto !pl-8 text-xs" :value="tenant.organizationId ?? ''" @change="onChange">
+      <option value="">{{ t('common.selectOrganization') }}</option>
+      <option v-for="option in tenant.options" :key="option.id" :value="option.id">{{ option.name }}</option>
+    </select>
+  </div>
 </template>
 
 <script setup lang="ts">

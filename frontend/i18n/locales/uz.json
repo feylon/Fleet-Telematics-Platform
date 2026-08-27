@@ -442,7 +442,8 @@
     "SUPERADMIN": "Superadmin",
     "DISPATCHER": "Dispetcher",
     "FLEET_MANAGER": "Avtopark boshlig'i",
-    "DRIVER": "Haydovchi"
+    "DRIVER": "Haydovchi",
+    "autoRefresh": "Har 10 soniyada yangilanadi"
   },
   "driver": {
     "title": "Haydovchi paneli",
@@ -458,5 +459,13 @@
     "noOrders": "Bugunga buyurtma yo'q",
     "movingHours": "Harakat (soat)",
     "idleHours": "Bekor turish (soat)"
+  },
+  "login": {
+    "liveTitle": "Jonli kuzatuv",
+    "liveText": "Har bir transportning joylashuvi, tezligi va holati real vaqtda xaritada",
+    "safetyTitle": "Geozona va xavfsizlik ogohlantirishlari",
+    "safetyText": "Tezlik oshirish, geozonadan chiqish, SOS va yoqilg'i kamayishi haqida darhol xabar",
+    "analyticsTitle": "Analitika va hisobotlar",
+    "analyticsText": "Masofa, yoqilg'i, haydovchi ballari va PDF/Excel hisobotlar"
   }
 }

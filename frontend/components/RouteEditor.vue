@@ -1,12 +1,12 @@
 <template>
-  <div class="relative h-full w-full">
-    <div ref="container" class="h-full w-full rounded-lg cursor-crosshair" />
+  <div class="relative h-full w-full overflow-hidden rounded-xl border border-slate-200 shadow-card">
+    <div ref="container" class="h-full w-full cursor-crosshair rounded-xl" />
     <div class="absolute left-12 top-2 z-[500] flex gap-1">
-      <button class="btn-secondary btn-xs" :class="mode === 'route' ? '!bg-primary !text-white' : ''" @click="mode = 'route'">{{ t('orders.route') }}</button>
-      <button class="btn-secondary btn-xs" :class="mode === 'checkpoint' ? '!bg-primary !text-white' : ''" @click="mode = 'checkpoint'">{{ t('orders.addCheckpoint') }}</button>
-      <button class="btn-secondary btn-xs" @click="emit('update:polyline', [])">{{ t('geofence.clear') }}</button>
+      <button class="btn-secondary btn-sm" :class="mode === 'route' ? '!border-[var(--color-primary)] !text-[var(--color-primary)]' : ''" @click="mode = 'route'"><Icon name="route" :size="14" />{{ t('orders.route') }}</button>
+      <button class="btn-secondary btn-sm" :class="mode === 'checkpoint' ? '!border-[var(--color-primary)] !text-[var(--color-primary)]' : ''" @click="mode = 'checkpoint'"><Icon name="map-pin" :size="14" />{{ t('orders.addCheckpoint') }}</button>
+      <button class="btn-secondary btn-sm" @click="emit('update:polyline', [])"><Icon name="trash" :size="14" />{{ t('geofence.clear') }}</button>
     </div>
-    <div class="absolute bottom-2 left-2 z-[500] rounded bg-white/90 px-2 py-1 text-xs text-slate-700">{{ t('orders.routeHint') }}</div>
+    <div class="absolute bottom-3 left-3 z-[500] rounded-lg bg-white/90 px-3 py-1.5 text-xs text-slate-700 shadow-card backdrop-blur">{{ t('orders.routeHint') }}</div>
   </div>
 </template>
 
@@ -68,7 +68,7 @@ onMounted(async () => {
   L = await loadLeaflet();
   if (!container.value) return;
   map = L.map(container.value).setView(TASHKENT, 10);
-  L.tileLayer(tileLayerOptions.url, { attribution: tileLayerOptions.attribution, maxZoom: tileLayerOptions.maxZoom }).addTo(map);
+  L.tileLayer(tileLayerOptions.url, { attribution: tileLayerOptions.attribution, maxZoom: tileLayerOptions.maxZoom, subdomains: tileLayerOptions.subdomains }).addTo(map);
   layer = L.layerGroup().addTo(map);
   map.on('click', (event) => {
     if (mode.value === 'route') emit('update:polyline', [...props.polyline, { latitude: event.latlng.lat, longitude: event.latlng.lng }]);

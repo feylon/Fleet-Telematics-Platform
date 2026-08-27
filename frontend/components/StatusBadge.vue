@@ -1,6 +1,6 @@
 <template>
-  <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold" :style="{ backgroundColor: `${color}1f`, color }">
-    <span class="h-1.5 w-1.5 rounded-full" :style="{ backgroundColor: color }" />
+  <span class="badge" :style="{ backgroundColor: `color-mix(in srgb, ${color} 13%, white)`, color }">
+    <span class="h-1.5 w-1.5 rounded-full" :class="value === 'EMERGENCY' ? 'pulse-emergency' : ''" :style="{ backgroundColor: color }" />
     {{ label }}
   </span>
 </template>
@@ -25,6 +25,8 @@ const palette: Record<string, string> = {
   processing: '#f59e0b',
   ready: '#16a34a',
   failed: '#dc2626',
+  up: '#16a34a',
+  down: '#dc2626',
 };
 
 const color = computed(() => {

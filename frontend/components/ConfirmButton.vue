@@ -1,11 +1,11 @@
 <template>
-  <button :class="klass" @click="confirmAndEmit">
+  <button :class="klass" :title="title" @click="confirmAndEmit">
     <slot />
   </button>
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{ klass?: string; message?: string }>();
+const props = defineProps<{ klass?: string; message?: string; title?: string }>();
 const emit = defineEmits<{ confirm: [] }>();
 const { t } = useI18n();
 

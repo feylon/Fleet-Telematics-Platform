@@ -1,17 +1,17 @@
 <template>
   <div class="space-y-3">
     <PageHeader :title="t('drivers.title')">
-      <button v-if="canEdit" class="btn-primary" @click="openCreate">{{ t('drivers.new') }}</button>
+      <button v-if="canEdit" class="btn-primary" @click="openCreate"><Icon name="plus" :size="16" />{{ t('drivers.new') }}</button>
     </PageHeader>
     <DataTable :columns="columns" :rows="rows" :loading="loading" row-key="id" :export-title="t('drivers.title')">
       <template #cell-licenseCategories="{ value }">{{ (value as string[]).join(', ') }}</template>
       <template #cell-isActive="{ value }"><span :class="value ? 'text-green-700' : 'text-slate-400'">{{ value ? t('common.active') : t('common.inactive') }}</span></template>
       <template #actions="{ row }">
         <template v-if="canEdit">
-          <button class="btn-secondary btn-xs" @click="openEdit(row)">{{ t('common.edit') }}</button>
-          <ConfirmButton klass="btn-danger btn-xs ml-1" @confirm="remove(row.id)">{{ t('common.delete') }}</ConfirmButton>
+          <button class="btn-secondary btn-xs" @click="openEdit(row)"><Icon name="pencil" :size="13" />{{ t('common.edit') }}</button>
+          <ConfirmButton klass="btn-danger btn-xs" @confirm="remove(row.id)"><Icon name="trash" :size="13" />{{ t('common.delete') }}</ConfirmButton>
         </template>
-        <button class="btn-secondary btn-xs ml-1" @click="openAssign(row)">{{ t('drivers.assignVehicle') }}</button>
+        <button class="btn-secondary btn-xs" @click="openAssign(row)"><Icon name="truck" :size="13" />{{ t('drivers.assignVehicle') }}</button>
       </template>
     </DataTable>
 
@@ -37,7 +37,7 @@
           <label class="label">{{ t('drivers.user') }}</label>
           <div class="flex gap-2">
             <select v-model="form.userId" class="input"><option value="">{{ t('drivers.noUser') }}</option><option v-for="user in driverUsers" :key="user.id" :value="user.id">{{ user.login }} · {{ user.fullName }}</option></select>
-            <button type="button" class="btn-secondary whitespace-nowrap" @click="userForm.open = !userForm.open">{{ t('drivers.createUser') }}</button>
+            <button type="button" class="btn-secondary whitespace-nowrap" @click="userForm.open = !userForm.open"><Icon name="plus" :size="14" />{{ t('drivers.createUser') }}</button>
           </div>
           <div v-if="userForm.open" class="mt-2 grid gap-2 rounded border border-slate-200 bg-slate-50 p-2 md:grid-cols-3">
             <input v-model="userForm.login" class="input" :placeholder="t('common.login')" pattern="[a-zA-Z0-9._-]{4,80}" />
@@ -46,7 +46,7 @@
           </div>
         </div>
         <div class="flex items-end"><label class="flex items-center gap-2 text-sm"><input v-model="form.isActive" type="checkbox" />{{ t('common.active') }}</label></div>
-        <div class="flex justify-end gap-2 md:col-span-3"><button type="button" class="btn-secondary" @click="modal = null">{{ t('common.cancel') }}</button><button class="btn-primary">{{ t('common.save') }}</button></div>
+        <div class="flex justify-end gap-2 md:col-span-3"><button type="button" class="btn-secondary" @click="modal = null">{{ t('common.cancel') }}</button><button class="btn-primary"><Icon name="check" :size="16" />{{ t('common.save') }}</button></div>
       </form>
     </Modal>
 

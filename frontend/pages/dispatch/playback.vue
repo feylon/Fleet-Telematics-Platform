@@ -8,13 +8,13 @@
       <DateRange v-model="range" @apply="load" />
     </PageHeader>
     <div class="grid gap-3 lg:grid-cols-3">
-      <div class="card h-[420px] lg:col-span-2">
+      <div class="h-[440px] lg:col-span-2">
         <ClientOnly>
           <PlaybackMap :points="points" :index="index" />
         </ClientOnly>
       </div>
       <div class="card card-body space-y-3">
-        <div class="text-sm font-semibold">{{ t('playback.position') }}</div>
+        <div class="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500"><Icon name="navigation" :size="14" />{{ t('playback.position') }}</div>
         <div v-if="current" class="grid grid-cols-2 gap-y-1 text-xs">
           <span class="text-slate-500">{{ t('common.time') }}</span><span>{{ formatDateTime(current.timestamp) }}</span>
           <span class="text-slate-500">{{ t('live.speed') }}</span><span>{{ current.speed.toFixed(1) }} {{ t('live.kmh') }}</span>
@@ -26,7 +26,7 @@
         </div>
         <p v-else class="text-xs text-slate-400">{{ t('playback.noTrack') }}</p>
         <div class="flex items-center gap-2">
-          <button class="btn-primary" :disabled="points.length === 0" @click="toggle">{{ playing ? t('playback.pause') : t('playback.play') }}</button>
+          <button class="btn-primary" :disabled="points.length === 0" @click="toggle"><Icon :name="playing ? 'pause' : 'play'" :size="16" />{{ playing ? t('playback.pause') : t('playback.play') }}</button>
           <label class="text-xs text-slate-500">{{ t('playback.speed') }}</label>
           <select v-model.number="speed" class="input w-20"><option v-for="s in [1, 2, 5, 10, 25]" :key="s" :value="s">{{ s }}x</option></select>
           <span class="ml-auto text-xs text-slate-500">{{ index + 1 }} / {{ points.length }} {{ t('playback.points') }}</span>

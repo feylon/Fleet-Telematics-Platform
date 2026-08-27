@@ -10,21 +10,21 @@
         <div>
           <label class="label">{{ t('admin.logo') }}</label>
           <div class="flex items-center gap-3">
-            <label class="btn-secondary cursor-pointer">{{ t('admin.uploadLogo') }}<input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" class="hidden" @change="onFile" /></label>
-            <button v-if="form.logoDataUrl" type="button" class="btn-secondary" @click="form.logoDataUrl = ''">{{ t('admin.removeLogo') }}</button>
+            <label class="btn-secondary cursor-pointer"><Icon name="download" :size="16" class="rotate-180" />{{ t('admin.uploadLogo') }}<input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" class="hidden" @change="onFile" /></label>
+            <button v-if="form.logoDataUrl" type="button" class="btn-secondary" @click="form.logoDataUrl = ''"><Icon name="trash" :size="16" />{{ t('admin.removeLogo') }}</button>
           </div>
         </div>
-        <button class="btn-primary" :disabled="busy">{{ t('common.save') }}</button>
+        <button class="btn-primary" :disabled="busy"><Icon name="check" :size="16" />{{ t('common.save') }}</button>
       </form>
       <div class="card card-body">
         <div class="label">{{ t('admin.preview') }}</div>
-        <div class="rounded-lg bg-slate-900 p-4 text-white">
+        <div class="rounded-xl p-5 text-white" style="background: linear-gradient(180deg, #0b1220 0%, #121b30 100%)">
           <div class="flex items-center gap-3">
             <img v-if="form.logoDataUrl" :src="form.logoDataUrl" class="h-12 w-12 rounded-md bg-white/90 object-contain p-1" alt="logo" />
             <div v-else class="flex h-12 w-12 items-center justify-center rounded-md text-lg font-bold" :style="{ backgroundColor: form.primaryColor }">{{ form.platformName.slice(0, 2).toUpperCase() }}</div>
             <div><div class="font-semibold">{{ form.platformName }}</div><div class="text-xs text-slate-300">{{ form.description }}</div></div>
           </div>
-          <button class="mt-4 rounded px-3 py-1.5 text-sm font-medium" :style="{ backgroundColor: form.primaryColor }">{{ t('auth.signIn') }}</button>
+          <button class="btn mt-4 text-white" :style="{ background: `linear-gradient(180deg, ${form.primaryColor}, color-mix(in srgb, ${form.primaryColor} 80%, black))` }"><Icon name="log-in" :size="16" />{{ t('auth.signIn') }}</button>
         </div>
       </div>
     </div>

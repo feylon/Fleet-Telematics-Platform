@@ -1,10 +1,13 @@
 <template>
-  <div class="relative h-full w-full">
-    <div ref="container" class="h-full w-full rounded-lg" />
-    <div class="absolute right-2 top-2 z-[500] flex flex-col gap-1">
-      <button class="btn-secondary btn-xs" @click="fitAll">{{ t('live.fitAll') }}</button>
-      <label class="btn-secondary btn-xs cursor-pointer"><input v-model="showGeofences" type="checkbox" class="mr-1" />{{ t('live.geofences') }}</label>
-      <label class="btn-secondary btn-xs cursor-pointer"><input v-model="showHeat" type="checkbox" class="mr-1" />{{ t('live.heatmap') }}</label>
+  <div class="relative h-full w-full overflow-hidden rounded-xl border border-slate-200 shadow-card">
+    <div ref="container" class="h-full w-full" />
+    <div class="absolute right-3 top-3 z-[500] flex flex-col gap-1.5">
+      <button class="btn-secondary btn-sm gap-1.5" @click="fitAll"><Icon name="maximize" :size="14" />{{ t('live.fitAll') }}</button>
+      <button class="btn-secondary btn-sm gap-1.5" :class="showGeofences ? '!border-[var(--color-primary)] !text-[var(--color-primary)]' : ''" @click="showGeofences = !showGeofences"><Icon name="hexagon" :size="14" />{{ t('live.geofences') }}</button>
+      <button class="btn-secondary btn-sm gap-1.5" :class="showHeat ? '!border-[var(--color-primary)] !text-[var(--color-primary)]' : ''" @click="showHeat = !showHeat"><Icon name="layers" :size="14" />{{ t('live.heatmap') }}</button>
+    </div>
+    <div class="absolute bottom-3 left-3 z-[500] flex gap-1.5 rounded-lg bg-white/90 px-2 py-1.5 text-[11px] font-medium shadow-card backdrop-blur">
+      <span v-for="status in ['MOVING', 'IDLE', 'OFFLINE', 'EMERGENCY']" :key="status" class="inline-flex items-center gap-1 px-1"><span class="h-2 w-2 rounded-full" :style="{ backgroundColor: statusColor(status) }" />{{ t(`status.${status}`) }}</span>
     </div>
   </div>
 </template>
@@ -14,7 +17,7 @@ import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import type { Map as LeafletMap, LayerGroup, Marker, MarkerClusterGroup, Layer } from 'leaflet';
 import type { LiveVehicle } from '~/stores/live';
 import { loadLeaflet, TASHKENT, tileLayerOptions, type LeafletModule } from '~/composables/useLeaflet';
-import { vehicleIconSvg } from '~/utils/status';
+import { statusColor, vehiclePillHtml } from '~/utils/status';
 import { formatDateTime } from '~/utils/format';
 
 const props = defineProps<{
@@ -40,17 +43,23 @@ const markers = new Map<string, Marker>();
 let fitted = false;
 
 const popupHtml = (vehicle: LiveVehicle): string => `
-  <div class="text-xs leading-5">
-    <div class="font-semibold">${vehicle.plateNumber ?? vehicle.vehicleId.slice(0, 8)}</div>
-    <div>${vehicle.driverName ?? ''}</div>
-    <div>${t('live.speed')}: <b>${vehicle.speed.toFixed(0)} ${t('live.kmh')}</b></div>
-    <div>${t('live.fuel')}: ${vehicle.fuelLevel.toFixed(0)}%</div>
-    <div>${t('live.engineTemp')}: ${vehicle.engineTemp.toFixed(0)}°</div>
-    <div>${t('live.lastSeen')}: ${formatDateTime(vehicle.receivedAt)}</div>
-    <div>${t('common.status')}: <b>${t(`status.${vehicle.status}`)}</b></div>
+  <div style="font-size:12px;line-height:1.5;min-width:180px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${statusColor(vehicle.status)}"></span>
+      <b style="font-size:14px">${vehicle.plateNumber ?? vehicle.vehicleId.slice(0, 8)}</b>
+      <span style="margin-left:auto;font-size:11px;color:#64748b">${t(`status.${vehicle.status}`)}</span>
+    </div>
+    <div style="color:#475569">${vehicle.driverName ?? '—'}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 12px;margin-top:6px;color:#334155">
+      <span>${t('live.speed')}</span><b style="text-align:right">${vehicle.speed.toFixed(0)} ${t('live.kmh')}</b>
+      <span>${t('live.fuel')}</span><b style="text-align:right">${vehicle.fuelLevel.toFixed(0)}%</b>
+      <span>${t('live.engineTemp')}</span><b style="text-align:right">${vehicle.engineTemp.toFixed(0)}°</b>
+      <span>${t('live.heading')}</span><b style="text-align:right">${vehicle.heading.toFixed(0)}°</b>
+    </div>
+    <div style="margin-top:6px;font-size:11px;color:#94a3b8">${t('live.lastSeen')}: ${formatDateTime(vehicle.receivedAt)}</div>
   </div>`;
 
-const iconFor = (vehicle: LiveVehicle) => L!.divIcon({ className: 'leaflet-vehicle-icon', html: vehicleIconSvg(vehicle.status, vehicle.heading), iconSize: [34, 34], iconAnchor: [17, 17], popupAnchor: [0, -16] });
+const iconFor = (vehicle: LiveVehicle) => L!.divIcon({ className: 'leaflet-vehicle-icon', html: vehiclePillHtml(vehicle.status, vehicle.heading, vehicle.plateNumber ?? vehicle.vehicleId.slice(0, 6), vehicle.vehicleId === props.focusId), iconSize: [0, 0], iconAnchor: [0, 0], popupAnchor: [30, -14] });
 
 const syncVehicles = () => {
   if (!L || !map || !cluster) return;
@@ -65,7 +74,7 @@ const syncVehicles = () => {
       existing.setPopupContent(popupHtml(vehicle));
     } else {
       const marker = L.marker(position, { icon: iconFor(vehicle), title: vehicle.plateNumber ?? vehicle.vehicleId });
-      marker.bindPopup(popupHtml(vehicle));
+      marker.bindPopup(popupHtml(vehicle), { closeButton: false, offset: [0, -4] });
       marker.on('click', () => emit('select', vehicle.vehicleId));
       markers.set(vehicle.vehicleId, marker);
       cluster.addLayer(marker);
@@ -89,7 +98,7 @@ const syncGeofences = () => {
   if (!showGeofences.value) return;
   for (const geofence of props.geofences ?? []) {
     const ring = geofence.polygon.coordinates[0].map(([lng, lat]) => [lat, lng] as [number, number]);
-    L.polygon(ring, { color: geofence.color, weight: 2, fillOpacity: 0.12 }).bindTooltip(geofence.name, { sticky: true }).addTo(geofenceLayer);
+    L.polygon(ring, { color: geofence.color, weight: 2, fillColor: geofence.color, fillOpacity: 0.15 }).bindTooltip(geofence.name, { sticky: true, className: 'rounded-md' }).addTo(geofenceLayer);
   }
 };
 
@@ -115,7 +124,7 @@ const syncHeat = () => {
 const fitAll = () => {
   if (!map || markers.size === 0 || !L) return;
   const bounds = L.latLngBounds([...markers.values()].map((marker) => marker.getLatLng()));
-  map.fitBounds(bounds.pad(0.2), { maxZoom: 15 });
+  map.fitBounds(bounds, { padding: [48, 48], maxZoom: 15 });
 };
 
 const focus = (vehicleId: string) => {
@@ -130,19 +139,27 @@ const focus = (vehicleId: string) => {
 onMounted(async () => {
   L = await loadLeaflet();
   if (!container.value) return;
-  map = L.map(container.value, { zoomControl: true, preferCanvas: true }).setView(TASHKENT, 11);
-  L.tileLayer(tileLayerOptions.url, { attribution: tileLayerOptions.attribution, maxZoom: tileLayerOptions.maxZoom }).addTo(map);
+  map = L.map(container.value, { zoomControl: false, preferCanvas: true }).setView(TASHKENT, 11);
+  L.control.zoom({ position: 'bottomright' }).addTo(map);
+  L.tileLayer(tileLayerOptions.url, { attribution: tileLayerOptions.attribution, maxZoom: tileLayerOptions.maxZoom, subdomains: tileLayerOptions.subdomains }).addTo(map);
   cluster = L.markerClusterGroup({
     maxClusterRadius: 50,
     disableClusteringAtZoom: 15,
-    iconCreateFunction: (group) => L!.divIcon({ html: `<div class="marker-cluster-custom">${group.getChildCount()}</div>`, className: '', iconSize: [36, 36] }),
+    showCoverageOnHover: false,
+    iconCreateFunction: (group) => L!.divIcon({ html: `<div class="marker-cluster-custom">${group.getChildCount()}</div>`, className: '', iconSize: [38, 38] }),
   });
   map.addLayer(cluster);
   geofenceLayer = L.layerGroup().addTo(map);
   syncVehicles();
   syncGeofences();
   syncHeat();
-  setTimeout(() => map?.invalidateSize(), 200);
+  setTimeout(() => {
+    map?.invalidateSize();
+    if (!fitted && markers.size > 0) {
+      fitAll();
+      fitted = true;
+    }
+  }, 250);
 });
 
 onBeforeUnmount(() => {
@@ -154,7 +171,10 @@ watch(() => props.vehicles, syncVehicles, { deep: true });
 watch(() => props.geofences, syncGeofences, { deep: true });
 watch(showGeofences, syncGeofences);
 watch([showHeat, () => props.heatCells], syncHeat, { deep: true });
-watch(() => props.focusId, (id) => id && focus(id));
+watch(() => props.focusId, (id) => {
+  syncVehicles();
+  if (id) focus(id);
+});
 watch(
   () => props.highlight,
   (point) => {
@@ -162,7 +182,7 @@ watch(
     if (highlightLayer) map.removeLayer(highlightLayer);
     highlightLayer = null;
     if (!point) return;
-    highlightLayer = L.marker([point.latitude, point.longitude], { icon: L.divIcon({ className: 'leaflet-vehicle-icon', html: '<div style="width:18px;height:18px;border-radius:50%;background:#dc2626;border:3px solid #fff;box-shadow:0 0 0 4px rgba(220,38,38,.35)"></div>', iconSize: [18, 18], iconAnchor: [9, 9] }) }).addTo(map);
+    highlightLayer = L.marker([point.latitude, point.longitude], { icon: L.divIcon({ className: 'leaflet-vehicle-icon', html: '<span class="vehicle-ring" style="border-color:#dc2626"></span><div style="width:16px;height:16px;border-radius:50%;background:#dc2626;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);transform:translate(-8px,-8px)"></div>', iconSize: [0, 0], iconAnchor: [0, 0] }) }).addTo(map);
     map.setView([point.latitude, point.longitude], Math.max(map.getZoom(), 14));
   },
 );
