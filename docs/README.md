@@ -15,3 +15,4 @@ Documentation index.
 | [operations.md](operations.md) | Operational runbook: health, observability, scaling, backups, troubleshooting |
 | [frontend.md](frontend.md) | Nuxt 3 dashboard: pages per role, i18n, exports, map and playback |
 | [testing.md](testing.md) | Test suites and the branch-per-change workflow |
+| [CHANGELOG.md](CHANGELOG.md) | Release notes |
